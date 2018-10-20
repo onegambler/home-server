@@ -1,0 +1,152 @@
+version: '3'
+services:
+  homeassistant:
+    container_name: home-assistant
+    restart: unless-stopped
+    image: homeassistant/raspberrypi3-homeassistant:0.79.3
+    depends_on:
+      - mosquitto
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    ports:
+      - "8123:8123"
+    volumes:
+      - /home/pi/docker/hass/config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /home/pi/docker/hass/media:/media
+    network_mode: host
+    privileged: true
+    logging:
+      driver: none
+
+  samba:
+    container_name: samba
+    image: dperson/samba:armhf
+    restart: unless-stopped
+    environment: 
+      - WORKGROUP=workgroup
+    ports:
+      - "137:137/tcp"
+      - "137:137/udp"
+      - "138:138/tcp"
+      - "138:138/udp"
+      - "139:139"
+      - "445:445"
+      - "445:445/udp"
+    volumes:
+      - /home/pi/docker:/mount
+    command: 
+      -u "roberto;${ROBERTO_PASSWORD}"
+      -s "HASS;/mount;yes;no;no;roberto"
+    logging:
+      driver: none
+
+  nginx:
+    image: lsioarmhf/letsencrypt:latest
+    container_name: nginx
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - EMAIL=${LETSENCRYPT_EMAIL}
+      - URL=${HASS_URL}
+      - SUBDOMAINS=${HASS_SUBDOMAIN}
+      - ONLY_SUBDOMAINS=true
+      - VALIDATION=http
+      - TZ=Europe/London
+    volumes:
+      - /home/pi/docker/nginx/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    cap_add:
+      - NET_ADMIN
+    logging:
+      driver: none
+
+  duckdns:
+    image: lsioarmhf/duckdns:latest
+    container_name: duckdns
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - SUBDOMAINS=${HASS_SUBDOMAIN}
+      - TOKEN=${DUCKDNS_TOKEN}
+      - TZ=Europe/London
+    logging:
+      driver: none
+
+  mosquitto:
+    image: sbiermann/rpi-mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    volumes:
+      - /home/pi/docker/mqtt/config:/mqtt/config:ro
+      - /home/pi/docker/mqtt/log:/mqtt/log
+      - /home/pi/docker/mqtt/data/:/mqtt/data
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    expose:
+      - "1883"
+      - "9001"
+    logging:
+      driver: none
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer:arm
+    ports:
+      - 9000:9000
+    volumes:
+      - /home/pi/docker/portainer/data:/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: on-failure
+    logging:
+      driver: none
+
+  ble-scanner:
+    container_name: ble-scanner
+    image: onegambler/mqtt-ble-scanner:latest
+    volumes:
+      - /home/pi/docker/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
+    restart: on-failure
+    network_mode: host
+    privileged: true
+    logging:
+      driver: none
+
+  dropbox-syncer:
+    container_name: dropbox-syncer
+    image: onegambler/dropbox-syncer:latest
+    volumes:
+      - /home/pi/docker:/data:ro
+    restart: on-failure
+    environment:
+      - DROPBOX_KEY=${DROPBOX_ACCESS_TOKEN}
+      - TO_EXCLUDE=home-assistant_v2.db*,home-assistant.log,hass/media,.git,deps,__pycache__,hass/config/tts,*.log*,*_google.mp3
+      - TZ=Europe/London
+      - CRON_SCHEDULE=0 2 * * *
+    logging:
+      driver: none
+  
+  watchtower:
+    container_name: watchtower
+    image: v2tec/watchtower:armhf-latest
+    restart: on-failure
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --schedule "0 0 4 * * *"
+    logging:
+      driver: none
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt:arm32v6
+    tty: true
+    volumes:
+      - /home/pi/docker/zigbee2mqtt/data:/app/data
+    devices:
+      - /dev/ttyACM0
