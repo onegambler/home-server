@@ -1,48 +1,70 @@
 # Installing docker
-sudo apt-get update
-sudo apt-get install -y \
-     apt-transport-https \
-     ca-certificates \
-     curl \
-     gnupg2 \
-     software-properties-common
+sudo apt update
+sudo apt upgrade
+sudo apt dist-upgrade
+
+sudo apt-get install -y curl openssh-server git
+
+sudo sed -i 's/Port 22/Port 2222/g' /etc/ssh/sshd_config
      
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
 
 sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/debian \
-   $(lsb_release -cs) \
-   stable"sudo apt-get update
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
+sudo apt update
 sudo apt-get install docker-ce -y
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo apt install -y python python-pip
-pip install docker-compose
 
-sudo groupadd docker
-sudo usermod -aG docker $USER
+sudo usermod -aG docker ${USER}
+su - ${USER}
 
-# Setting up .bashrc
-EXPORT_CONFIG="export PATH=\$HOME/.local/bin:\$PATH"
-grep -q -F "$EXPORT_CONFIG" ~/.bashrc || echo "$EXPORT_CONFIG"  | sudo tee --append ~/.bashrc > /dev/null
-source ~/.bashrc
+sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
 # Setting up aliases
-ALIASES="alias ll='ls -al'
-dbash() { docker exec -it $(docker ps -aqf "name=$1") bash; }
+ALIASES="dbash() { docker exec -it $(docker ps -aqf "name=$1") bash; }
 alias dps='docker ps'
 alias dprune='docker system prune'"
 
 grep -q -F "$ALIASES" ~/.bash_aliases || echo "$ALIASES" > ~/.bash_aliases
 
-# Setting up /etc/dhcpcd.conf
-DHCP_CONFIG="interface eth0
-static ip_address=192.168.1.70/24
-static routers=192.168.1.254
-static domain_name_servers=1.1.1.1 1.0.0.1"
+SUSPEND="
+[Disable suspend (upower)]
+Identity=unix-user:*
+Action=org.freedesktop.upower.suspend
+ResultActive=no
+ResultInactive=no
+ResultAny=no
 
-grep -q -x "interface eth0" /etc/dhcpcd.conf  || echo "$DHCP_CONFIG" | sudo tee --append /etc/dhcpcd.conf > /dev/null
+[Disable suspend (logind)]
+Identity=unix-user:*
+Action=org.freedesktop.login1.suspend
+ResultActive=yes
+ResultInactive=no
+ResultAny=yes
+
+[Disable suspend when others are logged in (logind)]
+Identity=unix-user:*
+Action=org.freedesktop.login1.suspend-multiple-sessions
+ResultActive=yes
+ResultInactive=no
+ResultAny=yes
+"
+sudo grep -q -F "$SUSPEND" /etc/polkit-1/localauthority/50-local.d/com.ubuntu.disable-suspend.pkla || sudo echo "$SUSPEND" > /etc/polkit-1/localauthority/50-local.d/com.ubuntu.disable-suspend.pkla
+
+# Setting up /etc/network/interfaces
+DHCP_CONFIG="
+# The primary network interface
+auto eno1
+iface eno1 inet static
+    address 192.168.1.70
+    netmask 255.255.255.0
+    network 192.168.1.0
+    broadcast 192.168.1.255
+    gateway 192.168.1.254
+    dns-nameservers 1.1.1.1 1.0.0.1"
+
+grep -q -x "iface eno1 inet static" /etc/network/interfaces  || echo "$DHCP_CONFIG" | sudo tee --append /etc/network/interfaces > /dev/null
 
 # Setting up /etc/hosts
 HOSTS_CONFIG="192.168.1.70    hass.home
@@ -58,12 +80,18 @@ HOSTS_CONFIG="192.168.1.70    hass.home
 grep -q -x "192.168.1.70    hass.home" /etc/hosts  || echo "$HOSTS_CONFIG" | sudo tee --append /etc/hosts > /dev/null 
 
 # Installing pure-ftp
+mkdir ~/FTP
 sudo apt-get install pure-ftpd -y
 sudo groupadd ftpgroup
 sudo useradd ftpuser -g ftpgroup -s /sbin/nologin -d /dev/null
-sudo mkdir ~/FTP
 sudo chown -R ftpuser:ftpgroup ~/FTP
-#sudo pure-pw useradd upload -u ftpuser -g ftpgroup -d ~/FTP -m
+sudo pure-pw useradd upload -u ftpuser -g ftpgroup -d ~/FTP -m
 sudo pure-pw mkdb
 sudo ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/60puredb
 sudo service pure-ftpd restart
+
+# On Ubuntu 16.04 LTS, I successfully used the following to disable suspend:
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+
+# And this to re-enable it:
+# sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target

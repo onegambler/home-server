@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.79.3
+    image: homeassistant/intel-nuc-homeassistant:0.80.3
     depends_on:
       - mosquitto
     devices:
@@ -46,8 +46,6 @@ services:
     container_name: nginx
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
       - EMAIL=${LETSENCRYPT_EMAIL}
       - URL=${HASS_URL}
       - SUBDOMAINS=${HASS_SUBDOMAIN}
@@ -70,8 +68,6 @@ services:
     container_name: duckdns
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
       - SUBDOMAINS=${HASS_SUBDOMAIN}
       - TOKEN=${DUCKDNS_TOKEN}
       - TZ=Europe/London
