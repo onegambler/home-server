@@ -228,14 +228,3 @@ services:
       - CRON_SCHEDULE=0 3 * * *
     logging:
       driver: none
-
-  ble-scanner:
-    container_name: ble-scanner
-    image: onegambler/mqtt-ble-scanner:latest
-    volumes:
-      - /mnt/extHD/raspberrypi/configs/mqtt-ble-scanner:/mqtt-ble-scanner/config
-    restart: on-failure
-    network_mode: host
-    privileged: true
-    logging:
-      driver: none
