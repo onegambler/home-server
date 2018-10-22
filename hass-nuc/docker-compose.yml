@@ -113,36 +113,11 @@ services:
     logging:
       driver: none
 
-  zigbee2mqtt:
-    container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:latest
-    tty: true
-    volumes:
-      - /home/pi/docker/zigbee2mqtt/data:/app/data
-    devices:
-      - /dev/ttyACM0
-
   ble-scanner:
     container_name: ble-scanner
     image: onegambler/mqtt-ble-scanner:latest
     volumes:
-      - /home/pi/docker/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
+      - /opt/conf/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
     restart: on-failure
     network_mode: host
     privileged: true
-    logging:
-      driver: none
-
-  dropbox-syncer:
-    container_name: dropbox-syncer
-    image: onegambler/dropbox-syncer:latest
-    volumes:
-      - /home/pi/docker:/data:ro
-    restart: on-failure
-    environment:
-      - DROPBOX_KEY=${DROPBOX_ACCESS_TOKEN}
-      - TO_EXCLUDE=home-assistant_v2.db*,home-assistant.log,hass/media,.git,deps,__pycache__,hass/config/tts,*.log*,*_google.mp3
-      - TZ=Europe/London
-      - CRON_SCHEDULE=0 2 * * *
-    logging:
-      driver: none
