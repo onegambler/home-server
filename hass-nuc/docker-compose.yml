@@ -121,6 +121,8 @@ services:
     restart: unless-stopped
     network_mode: host
     privileged: true
+    logging:
+      driver: none
 
   mariadb:
     image: mariadb:latest
@@ -133,4 +135,6 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_USER=${MARIADB_USER}
       - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+    logging:
+      driver: none
       
