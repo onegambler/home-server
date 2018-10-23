@@ -125,6 +125,7 @@ services:
       driver: none
 
   mariadb:
+    container_name: mariadb
     image: mariadb:latest
     restart: unless-stopped
     ports:
