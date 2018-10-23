@@ -80,12 +80,12 @@ HOSTS_CONFIG="192.168.1.70    hass.home
 grep -q -x "192.168.1.70    hass.home" /etc/hosts  || echo "$HOSTS_CONFIG" | sudo tee --append /etc/hosts > /dev/null 
 
 # Installing pure-ftp
-mkdir ~/FTP
+sudo mkdir -p /opt/conf/hass/media/
 sudo apt-get install pure-ftpd -y
 sudo groupadd ftpgroup
 sudo useradd ftpuser -g ftpgroup -s /sbin/nologin -d /dev/null
-sudo chown -R ftpuser:ftpgroup ~/FTP
-sudo pure-pw useradd upload -u ftpuser -g ftpgroup -d ~/FTP -m
+sudo chown -R ftpuser:ftpgroup /opt/conf/hass/media/
+sudo pure-pw useradd upload -u ftpuser -g ftpgroup -d /opt/conf/hass/media/ -m
 sudo pure-pw mkdb
 sudo ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/60puredb
 sudo service pure-ftpd restart

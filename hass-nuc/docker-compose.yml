@@ -99,14 +99,14 @@ services:
     volumes:
       - /opt/conf/portainer/data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: on-failure
+    restart: unless-stopped
     logging:
       driver: none
   
   watchtower:
     container_name: watchtower
     image: v2tec/watchtower:latest
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --schedule "0 0 4 * * *"
@@ -118,6 +118,19 @@ services:
     image: onegambler/mqtt-ble-scanner:latest
     volumes:
       - /opt/conf/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
-    restart: on-failure
+    restart: unless-stopped
     network_mode: host
     privileged: true
+
+  mariadb:
+    image: mariadb:latest
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+    -  /opt/conf/mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD: yes
+      - MYSQL_USER: ${MARIADB_USER}
+      - MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+      
