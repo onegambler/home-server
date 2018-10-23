@@ -130,7 +130,7 @@ services:
     volumes:
     -  /opt/conf/mariadb:/var/lib/mysql
     environment:
-      - MYSQL_RANDOM_ROOT_PASSWORD: yes
+      - MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       - MYSQL_USER: ${MARIADB_USER}
       - MYSQL_PASSWORD: ${MARIADB_PASSWORD}
       
