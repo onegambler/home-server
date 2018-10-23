@@ -135,6 +135,7 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_USER=${MARIADB_USER}
       - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+      - MYSQL_DATABASE=hass
     logging:
       driver: none
       
