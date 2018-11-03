@@ -208,3 +208,5 @@ services:
       - /dev/vcsm:/dev/vcsm
     ports:
       - "9999:8888"
+    logging:
+      driver: none

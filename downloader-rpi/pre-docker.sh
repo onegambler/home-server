@@ -9,6 +9,7 @@ echo "deb [arch=armhf] https://download.docker.com/linux/$(. /etc/os-release; ec
 sudo apt-get update && sudo apt-get upgrade
 sudo apt install -y docker-ce python python-pip
 pip install docker-compose
+sudo ln -s /home/pi/.local/bin/docker-compose /usr/bin/docker-compose
 
 # Enable docker API
 sudo sed -i '/ExecStart/s/$/ -H tcp:\/\/0.0.0.0:/' /lib/systemd/system/docker.service
@@ -27,6 +28,7 @@ alias dprune='docker system prune'"
 grep -q -F "$ALIASES" /home/pi/.bash_aliases || echo "$ALIASES" > /home/pi/.bash_aliases
 
 # Automount harddrive
+sudo mkdir -p /mnt/extHD
 sudo mount -t ext4 UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7 /mnt/extHD
 export FSTAB_CONFIG="UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7        /mnt/extHD      ext4    defaults          0       0"
 grep -q -F "$FSTAB_CONFIG" /etc/fstab || echo "$FSTAB_CONFIG" | sudo tee --append /etc/fstab > /dev/null
@@ -51,6 +53,6 @@ static domain_name_servers=1.1.1.1 1.0.0.1"
 grep -q -x "interface eth0" /etc/dhcpcd.conf  || echo "$DHCP_CONFIG" | sudo tee --append  /etc/dhcpcd.conf > /dev/null
 
 ### Install bluetooth dongle
-sudo sed -i '/ExecStart/s/$/ --noplugin=sap/' /etc/systemd/system/bluetooth.target.wants/bluetooth.service
-sudo systemctl daemon-reload
-sudo service bluetooth restart
+# sudo sed -i '/ExecStart/s/$/ --noplugin=sap/' /etc/systemd/system/bluetooth.target.wants/bluetooth.service
+# sudo systemctl daemon-reload
+# sudo service bluetooth restart
