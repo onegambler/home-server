@@ -28,6 +28,7 @@ alias dprune='docker system prune'"
 grep -q -F "$ALIASES" /home/pi/.bash_aliases || echo "$ALIASES" > /home/pi/.bash_aliases
 
 # Automount harddrive
+echo "********************************  Setting hardrive automount  ********************************"
 sudo mkdir -p /mnt/extHD
 sudo mount -t ext4 UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7 /mnt/extHD
 export FSTAB_CONFIG="UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7        /mnt/extHD      ext4    defaults          0       0"
@@ -51,6 +52,8 @@ static routers=192.168.1.254
 static domain_name_servers=1.1.1.1 1.0.0.1"
 
 grep -q -x "interface eth0" /etc/dhcpcd.conf  || echo "$DHCP_CONFIG" | sudo tee --append  /etc/dhcpcd.conf > /dev/null
+
+echo "********************************  Installation complete  ********************************"
 
 ### Install bluetooth dongle
 # sudo sed -i '/ExecStart/s/$/ --noplugin=sap/' /etc/systemd/system/bluetooth.target.wants/bluetooth.service
