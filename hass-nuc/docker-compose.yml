@@ -7,8 +7,6 @@ services:
     depends_on:
       - mosquitto
       - mariadb
-    devices:
-      - /dev/ttyACM0:/dev/ttyACM0
     ports:
       - "8123:8123"
     volumes:
@@ -154,5 +152,17 @@ services:
       - MYSQL_USER=${MARIADB_USER}
       - MYSQL_PASSWORD=${MARIADB_PASSWORD}
       - MYSQL_DATABASE=hass
+    logging:
+      driver: none
+
+      
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    restart: unless-stopped
+    volumes:
+      - /opt/conf/zigbee2mqtt:/app/data
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
     logging:
       driver: none
