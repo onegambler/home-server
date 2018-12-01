@@ -73,7 +73,7 @@ services:
 
   jackett:
     container_name: jackett
-    image: lsioarmhf/jackett
+    image: lsioarmhf/jackett:latest
     restart: unless-stopped
     environment:
       - PUID=1000 # default user id, for downloaded files access rights
@@ -90,7 +90,7 @@ services:
 
   sonarr:
     container_name: sonarr
-    image: lsioarmhf/sonarr
+    image: lsioarmhf/sonarr:latest
     restart: unless-stopped
     network_mode: host
     environment:
@@ -112,7 +112,7 @@ services:
 
   radarr:
     container_name: radarr
-    image: lsioarmhf/radarr
+    image: lsioarmhf/radarr:latest
     restart: unless-stopped
     network_mode: host
     environment:
