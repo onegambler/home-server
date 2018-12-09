@@ -61,7 +61,7 @@ iface eno1 inet static
     netmask 255.255.255.0
     network 192.168.1.0
     broadcast 192.168.1.255
-    gateway 192.168.1.254
+    gateway 192.168.1.1
     dns-nameservers 1.1.1.1 1.0.0.1"
 
 grep -q -x "iface eno1 inet static" /etc/network/interfaces  || echo "$DHCP_CONFIG" | sudo tee --append /etc/network/interfaces > /dev/null

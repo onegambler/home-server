@@ -29,7 +29,7 @@ grep -q -F "$ALIASES" /home/pi/.bash_aliases || echo "$ALIASES" > /home/pi/.bash
 # Setting up /etc/dhcpcd.conf
 DHCP_CONFIG="interface eth0
 static ip_address=192.168.1.70/24
-static routers=192.168.1.254
+static routers=192.168.1.1
 static domain_name_servers=1.1.1.1 1.0.0.1"
 
 grep -q -x "interface eth0" /etc/dhcpcd.conf  || echo "$DHCP_CONFIG" | sudo tee --append /etc/dhcpcd.conf > /dev/null
