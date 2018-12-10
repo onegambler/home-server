@@ -53,6 +53,19 @@ static domain_name_servers=1.1.1.1 1.0.0.1"
 
 grep -q -x "interface eth0" /etc/dhcpcd.conf  || echo "$DHCP_CONFIG" | sudo tee --append  /etc/dhcpcd.conf > /dev/null
 
+echo "********************************  Installing log2ram  ********************************"
+curl -Lo log2ram.tar.gz https://github.com/azlux/log2ram/archive/master.tar.gz
+tar xf log2ram.tar.gz
+cd log2ram-master
+chmod +x install.sh && sudo ./install.sh
+cd ..
+rm -r log2ram-master
+
+sudo mv /etc/cron.hourly/log2ram /etc/cron.daily/log2ram
+
+# Uninstall
+# chmod +x /usr/local/bin/uninstall-log2ram.sh && sudo /usr/local/bin/uninstall-log2ram.sh
+
 echo "********************************  Installation complete  ********************************"
 
 ### Install bluetooth dongle
