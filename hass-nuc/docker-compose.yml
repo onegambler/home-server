@@ -196,8 +196,8 @@ services:
       - TZ=Europe/London
       - PLEX_CLAIM=${PLEX_CLAIM}
     volumes:
-      - <path/to/plex/database>:/config
-      - <path/to/transcode/temp>:/transcode
+      - /opt/conf/plex/config:/config
+      - /opt/conf/plex/transcode:/transcode
       - /mnt/extHD/Roberto/media:/data
     logging:
       driver: none
