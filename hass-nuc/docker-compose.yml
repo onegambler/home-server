@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.84.6
+    image: homeassistant/intel-nuc-homeassistant:0.85.1
     depends_on:
       - mosquitto
       - mariadb
@@ -139,22 +139,6 @@ services:
     logging:
       driver: none
 
-  # nodered:
-  #   container_name: nodered
-  #   image: nodered/node-red-docker:slim-v8
-  #   restart: unless-stopped
-  #   ports:
-  #     - "1880:1880"
-  #   volumes:
-  #     - /opt/conf/node-red:/data
-  #   environment:
-  #     - MYSQL_RANDOM_ROOT_PASSWORD=yes
-  #     - MYSQL_USER=${MARIADB_USER}
-  #     - MYSQL_PASSWORD=${MARIADB_PASSWORD}
-  #     - MYSQL_DATABASE=hass
-  #   logging:
-  #     driver: none
-
   zigbee2mqtt:
     container_name: zigbee2mqtt
     image: koenkk/zigbee2mqtt:latest
@@ -202,3 +186,18 @@ services:
   #     - /mnt/extHD/download/incomplete/torrent:/volumes/download
   #   logging:
   #     driver: none
+
+
+  plex:
+    container_name: "plex"
+    image: plexinc/pms-docker:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/London
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    volumes:
+      - <path/to/plex/database>:/config
+      - <path/to/transcode/temp>:/transcode
+      - /mnt/extHD/Roberto/media:/data
+    logging:
+      driver: none
