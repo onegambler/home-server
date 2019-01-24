@@ -158,6 +158,8 @@ services:
     restart: unless-stopped
     volumes:
       - /opt/conf/deepstack:/datastore
+    environment: 
+      - VISION-DETECTION=True
     ports:
       - "5000:5000"
 
