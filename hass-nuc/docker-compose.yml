@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.85.1
+    image: homeassistant/intel-nuc-homeassistant:0.86.1
     depends_on:
       - mosquitto
       - mariadb
@@ -151,6 +151,15 @@ services:
       - /dev/ttyACM0:/dev/ttyACM0
     logging:
       driver: none
+  
+  deepstack:
+    container_name: deepstack
+    image: deepquestai/deepstack:latest
+    restart: unless-stopped
+    volumes:
+      - /opt/conf/deepstack:/datastore
+    ports:
+      - "80:5000"
 
   # organizr:
   #   image: lsiocommunity/organizr:latest
@@ -188,16 +197,16 @@ services:
   #     driver: none
 
 
-  plex:
-    container_name: "plex"
-    image: plexinc/pms-docker:latest
-    restart: unless-stopped
-    environment:
-      - TZ=Europe/London
-      - PLEX_CLAIM=${PLEX_CLAIM}
-    volumes:
-      - /opt/conf/plex/config:/config
-      - /opt/conf/plex/transcode:/transcode
-      - /mnt/extHD/Roberto/media:/data
-    logging:
-      driver: none
+  # plex:
+  #   container_name: "plex"
+  #   image: plexinc/pms-docker:latest
+  #   restart: unless-stopped
+  #   environment:
+  #     - TZ=Europe/London
+  #     - PLEX_CLAIM=${PLEX_CLAIM}
+  #   volumes:
+  #     - /opt/conf/plex/config:/config
+  #     - /opt/conf/plex/transcode:/transcode
+  #     - /mnt/extHD/Roberto/media:/data
+  #   logging:
+  #     driver: none
