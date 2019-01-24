@@ -159,7 +159,7 @@ services:
     volumes:
       - /opt/conf/deepstack:/datastore
     ports:
-      - "80:5000"
+      - "5000:5000"
 
   # organizr:
   #   image: lsiocommunity/organizr:latest
