@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.86.1
+    image: homeassistant/intel-nuc-homeassistant:0.87.0
     depends_on:
       - mosquitto
       - mariadb
@@ -162,6 +162,8 @@ services:
       - VISION-DETECTION=True
     ports:
       - "5000:5000"
+    logging:
+      driver: none
 
   # organizr:
   #   image: lsiocommunity/organizr:latest
