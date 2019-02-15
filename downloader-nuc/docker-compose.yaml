@@ -1,0 +1,175 @@
+version: '3'
+services:
+  samba:
+    container_name: samba
+    image: dperson/samba:latest
+    restart: unless-stopped
+    environment: 
+      - WORKGROUP=workgroup
+    ports:
+      - "137:137/tcp"
+      - "137:137/udp"
+      - "138:138/tcp"
+      - "138:138/udp"
+      - "139:139"
+      - "445:445"
+      - "445:445/udp"
+    volumes:
+      - /mnt/extHD/:/mount
+    command: 
+      -u "roberto;${ROBERTO_PASSWORD};1000;1000"
+      -u "jenny;${JENNY_PASSWORD};1000;1000"
+      -s "NAS;/mount;yes;no;no;roberto,jenny"
+    logging:
+      driver: none
+
+  deluge:
+    container_name: "deluge"
+    image: onegambler/deluge:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/London # timezone
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "58846:58846"
+      - "8112:8112"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/deluge/config:/volumes/config
+      - /mnt/extHD/raspberrypi/configs/deluge/torrents:/volumes/data
+      - /mnt/extHD/download/complete:/volumes/complete
+      - /mnt/extHD/download/incomplete/torrent:/volumes/download
+    logging:
+      driver: none
+
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett:amd64-latest
+    restart: unless-stopped
+    environment:
+      - PUID=1000 # default user id, for downloaded files access rights
+      - PGID=1000 # default group id, for downloaded files access rights
+      - TZ=Europe/London # timezone
+    ports:
+      - "9117:9117"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/download/complete:/download
+      - /mnt/extHD/raspberrypi/configs/jackett:/config # config files
+    logging:
+      driver: none
+
+  sonarr:
+    image: linuxserver/sonarr:amd64-latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/sonarr:/config
+      - /mnt/extHD/Roberto/media/series:/tv
+      - /mnt/extHD/download/complete:/downloads
+    ports:
+      - "8989:8989"
+    depends_on:
+      - jackett
+      - deluge
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr:amd64-latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/radarr:/config
+      - /mnt/extHD/Roberto/media/movies:/movies
+      - /mnt/extHD/download/complete:/downloads
+    ports:
+      - 7878:7878
+    depends_on:
+      - jackett
+      - deluge
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  portainer:
+    image: portainer/portainer:linux-amd64
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/extHD/raspberrypi/configs/portainer:/data
+    logging:
+      driver: none
+      
+  organizr:
+    image: linuxserver/organizr:amd64-latest
+    container_name: organizr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/organizr:/config
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      - sonarr
+      - radarr
+      - deluge
+    logging:
+      driver: none
+
+  resilio-sync:
+    image: linuxserver/resilio-sync:latest
+    container_name: resilio-sync
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+      - "55555:55555"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - UMASK_SET=022
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/resilio/config:/config
+      - /mnt/extHD/raspberrypi/configs/resilio/downloads:/downloads
+      - /mnt/extHD/Roberto:/sync
+    logging:
+      driver: none
+
+  watchtower:
+    image: v2tec/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --schedule "0 0 5 * * *"
+    logging:
+      driver: none
+
+  plex:
+    image: plexinc/pms-docker
+    container_name: plex
+    network_mode: host
+    environment:
+      - TZ=Europe/London
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/plex/config:/config
+      - /mnt/extHD:/data
+      - /mnt/extHD/raspberrypi/configs/plex/transcode:/transcode
+    restart: unless-stopped
+    logging:
+      driver: none

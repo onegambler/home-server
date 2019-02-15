@@ -30,12 +30,13 @@ touch ~/.bash_aliases
 
 grep -q -F "$ALIASES" ~/.bash_aliases || echo "$ALIASES" > ~/.bash_aliases
 
+
 # Setting up /etc/network/interfaces
 DHCP_CONFIG="
 # The primary network interface
 auto eno1
 iface eno1 inet static
-    address 192.168.1.70
+    address 192.168.1.64
     netmask 255.255.255.0
     network 192.168.1.0
     broadcast 192.168.1.255
@@ -43,6 +44,7 @@ iface eno1 inet static
     dns-nameservers 1.1.1.1 1.0.0.1"
 
 grep -q -x "iface eno1 inet static" /etc/network/interfaces  || echo "$DHCP_CONFIG" | sudo tee --append /etc/network/interfaces > /dev/null
+
 
 # Setting up /etc/hosts
 HOSTS_CONFIG="192.168.1.70    hass.home
@@ -57,19 +59,26 @@ HOSTS_CONFIG="192.168.1.70    hass.home
 
 grep -q -x "192.168.1.70    hass.home" /etc/hosts  || echo "$HOSTS_CONFIG" | sudo tee --append /etc/hosts > /dev/null 
 
-# Installing pure-ftp
-sudo mkdir -p /opt/conf/hass/media/
-sudo apt-get install pure-ftpd -y
-sudo groupadd ftpgroup
-sudo useradd ftpuser -g ftpgroup -s /sbin/nologin -d /dev/null
-sudo chown -R ftpuser:ftpgroup /opt/conf/hass/media/
-sudo pure-pw useradd upload -u ftpuser -g ftpgroup -d /opt/conf/hass/media/ -m
-sudo pure-pw mkdb
-sudo ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/60puredb
-sudo service pure-ftpd restart
-
 # On Ubuntu 16.04 LTS, I successfully used the following to disable suspend:
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
 # And this to re-enable it:
 # sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target
+
+# Automount harddrive
+echo "********************************  Setting hardrive automount  ********************************"
+sudo mkdir -p /mnt/extHD
+sudo mount -t ext4 UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7 /mnt/extHD
+export FSTAB_CONFIG="UUID=3b3e573f-f3b5-410c-841a-0ee9949925f7        /mnt/extHD      ext4    defaults          0       0"
+grep -q -F "$FSTAB_CONFIG" /etc/fstab || echo "$FSTAB_CONFIG" | sudo tee --append /etc/fstab > /dev/null
+
+sudo mkdir -p /mnt/extHD/raspberrypi/configs/{muximux,portainer,radarr,sonarr,jackett,mldonkey}
+sudo chown -R roberto:roberto /mnt/extHD/raspberrypi
+
+### Installing nfs
+sudo apt-get install nfs-kernel-server -y
+sudo service nfs-server stop
+
+EXPORT_CONFIG="/mnt/extHD           192.168.1.0/24(rw,nohide,insecure,no_subtree_check,async,all_squash)"
+grep -q -F "$EXPORT_CONFIG" /etc/exports || echo "$EXPORT_CONFIG" | sudo tee --append /etc/exports > /dev/null
+sudo service nfs-server start
