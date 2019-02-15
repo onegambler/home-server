@@ -4,8 +4,10 @@ services:
     container_name: samba
     image: dperson/samba:latest
     restart: unless-stopped
-    environment: 
+    environment:
       - WORKGROUP=workgroup
+      - USERID=1000
+      - GROUPID=1000
     ports:
       - 137:137/tcp
       - 137:137/udp
@@ -16,9 +18,9 @@ services:
       - 445:445/udp
     volumes:
       - /mnt/extHD/:/mount
-    command: 
-      -u "roberto;${ROBERTO_PASSWORD};1000;1000"
-      -u "jenny;${JENNY_PASSWORD};1000;1000"
+    command:
+      -u "roberto;${ROBERTO_PASSWORD}"
+      -u "jenny;${JENNY_PASSWORD}"
       -s "NAS;/mount;yes;no;no;roberto,jenny"
     logging:
       driver: none
@@ -78,6 +80,8 @@ services:
       - jackett
       - deluge
     restart: unless-stopped
+    logging:
+      driver: none
 
   radarr:
     image: linuxserver/radarr:amd64-latest
