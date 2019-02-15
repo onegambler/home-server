@@ -7,13 +7,13 @@ services:
     environment: 
       - WORKGROUP=workgroup
     ports:
-      - "137:137/tcp"
-      - "137:137/udp"
-      - "138:138/tcp"
-      - "138:138/udp"
-      - "139:139"
-      - "445:445"
-      - "445:445/udp"
+      - 137:137/tcp
+      - 137:137/udp
+      - 138:138/tcp
+      - 138:138/udp
+      - 139:139
+      - 445:445
+      - 445:445/udp
     volumes:
       - /mnt/extHD/:/mount
     command: 
@@ -32,8 +32,8 @@ services:
       - PUID=1000
       - PGID=1000
     ports:
-      - "58846:58846"
-      - "8112:8112"
+      - 58846:58846
+      - 8112:8112
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/extHD/raspberrypi/configs/deluge/config:/volumes/config
@@ -52,7 +52,7 @@ services:
       - PGID=1000 # default group id, for downloaded files access rights
       - TZ=Europe/London # timezone
     ports:
-      - "9117:9117"
+      - 9117:9117
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/extHD/download/complete:/download
@@ -73,7 +73,7 @@ services:
       - /mnt/extHD/Roberto/media/series:/tv
       - /mnt/extHD/download/complete:/downloads
     ports:
-      - "8989:8989"
+      - 8989:8989
     depends_on:
       - jackett
       - deluge
@@ -105,7 +105,7 @@ services:
     container_name: portainer
     restart: unless-stopped
     ports:
-      - "9000:9000"
+      - 9000:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/extHD/raspberrypi/configs/portainer:/data
@@ -122,7 +122,7 @@ services:
     volumes:
       - /mnt/extHD/raspberrypi/configs/organizr:/config
     ports:
-      - "80:80"
+      - 80:80
     restart: unless-stopped
     depends_on:
       - sonarr
@@ -136,8 +136,8 @@ services:
     container_name: resilio-sync
     restart: unless-stopped
     ports:
-      - "8888:8888"
-      - "55555:55555"
+      - 8888:8888
+      - 55555:55555
     environment:
       - PUID=1000
       - PGID=1000
@@ -161,7 +161,7 @@ services:
       driver: none
 
   plex:
-    image: plexinc/pms-docker
+    image: plexinc/pms-docker:latest
     container_name: plex
     network_mode: host
     environment:
@@ -170,6 +170,15 @@ services:
       - /mnt/extHD/raspberrypi/configs/plex/config:/config
       - /mnt/extHD:/data
       - /mnt/extHD/raspberrypi/configs/plex/transcode:/transcode
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  linux_dash:
+    image: onegambler/linux_dash:latest
+    container_name: linux_dash
+    ports:
+      - 8080:80
     restart: unless-stopped
     logging:
       driver: none
