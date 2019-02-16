@@ -179,10 +179,10 @@ services:
       driver: none
 
   linux_dash:
-    image: onegambler/linux_dash:latest
+    image: imightbebob/linux-dash:x86
     container_name: linux_dash
     ports:
-      - 8080:80
+      - 8080:8080
     restart: unless-stopped
     logging:
       driver: none
