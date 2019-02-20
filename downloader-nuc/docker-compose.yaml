@@ -151,23 +151,6 @@ services:
     logging:
       driver: none
 
-  headphones:
-    image: linuxserver/headphones:amd64-latest
-    container_name: headphones
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-    volumes:
-      - /mnt/extHD/raspberrypi/configs/headphones:/config
-      - /mnt/extHD/download/complete:/downloads
-      - /mnt/extHD/Roberto/media/music:/music
-    ports:
-      - 8181:8181
-    restart: unless-stopped
-    logging:
-      driver: none
-
   portainer:
     image: portainer/portainer:linux-amd64
     container_name: portainer
