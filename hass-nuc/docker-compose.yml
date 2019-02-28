@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.88.1
+    image: homeassistant/intel-nuc-homeassistant:0.88.2
     depends_on:
       - mosquitto
       - mariadb
@@ -24,8 +24,8 @@ services:
     restart: unless-stopped
     environment: 
       - WORKGROUP=workgroup
-      - PUID=1000
-      - PGID=1000
+      - PUID=1001
+      - PGID=1001
     ports:
       - "137:137/tcp"
       - "137:137/udp"
