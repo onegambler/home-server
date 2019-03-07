@@ -182,6 +182,25 @@ services:
     logging:
       driver: none
 
+  organizr_2:
+    image: organizrtools/organizr-v2:latest
+    container_name: organizr-v2
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/organizr-v2:/config
+    ports:
+      - 88:80
+    restart: unless-stopped
+    depends_on:
+      - sonarr
+      - radarr
+      - deluge
+    logging:
+      driver: none
+
   resilio-sync:
     image: linuxserver/resilio-sync:latest
     container_name: resilio-sync
