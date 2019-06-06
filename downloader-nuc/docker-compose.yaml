@@ -162,27 +162,8 @@ services:
       - /mnt/extHD/raspberrypi/configs/portainer:/data
     logging:
       driver: none
-      
-  organizr:
-    image: linuxserver/organizr:amd64-latest
-    container_name: organizr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-    volumes:
-      - /mnt/extHD/raspberrypi/configs/organizr:/config
-    ports:
-      - 80:80
-    restart: unless-stopped
-    depends_on:
-      - sonarr
-      - radarr
-      - deluge
-    logging:
-      driver: none
 
-  organizr_2:
+  organizr-v2:
     image: organizrtools/organizr-v2:latest
     container_name: organizr-v2
     environment:
@@ -192,7 +173,7 @@ services:
     volumes:
       - /mnt/extHD/raspberrypi/configs/organizr-v2:/config
     ports:
-      - 88:80
+      - 80:80
     restart: unless-stopped
     depends_on:
       - sonarr
