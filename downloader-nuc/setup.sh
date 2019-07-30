@@ -48,7 +48,7 @@ grep -q -x "iface eno1 inet static" /etc/network/interfaces  || echo "$DHCP_CONF
 
 # Setting up /etc/hosts
 HOSTS_CONFIG="192.168.1.70    hass.home
-192.168.1.254   bthomehub.home
+192.168.1.254   router.home
 192.168.1.229   adguard.home
 192.168.1.226   lounge-camera.home
 192.168.1.69    tv-switch.smart
