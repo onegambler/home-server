@@ -179,3 +179,18 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+
+  grocy:
+    image: linuxserver/grocy:latest
+    container_name: grocy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /opt/conf/grocy:/config
+    ports:
+      - 9283:80
+    restart: unless-stopped
+    logging:
+      driver: none
