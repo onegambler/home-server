@@ -187,9 +187,9 @@ services:
       # Start home-assistant first
       - home-assistant
     environment:
-      - HA_URL="http://home-assistant:8123"
+      - HA_URL="http://${HOST}:8123"
       - TOKEN=${HASS_APPDAEMON_TOKEN}
-      - DASH_URL="http://192.168.1.70:5050"
+      - DASH_URL="http://${HOST}:5050"
     ports:
       - 5050:5050
     volumes:
