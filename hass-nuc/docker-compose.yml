@@ -180,6 +180,25 @@ services:
     logging:
       driver: none
 
+  appdaemon:
+    container_name: appdaemon
+    image: acockburn/appdaemon:latest
+    depends_on:
+      # Start home-assistant first
+      - home-assistant
+    environment:
+      - HA_URL="http://home-assistant:8123"
+      - TOKEN=${HASS_APPDAEMON_TOKEN}
+      - DASH_URL="http://192.168.1.70:5050"
+    ports:
+      - 5050:5050
+    volumes:
+      # App daemon configuration
+      - /opt/conf/appdaemon:/conf
+      # Timezone configuration (Linux only)
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
   grocy:
     image: linuxserver/grocy:latest
     container_name: grocy
