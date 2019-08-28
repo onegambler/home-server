@@ -194,10 +194,12 @@ services:
       - 5050:5050
     volumes:
       # App daemon configuration
-      - /opt/conf/appdaemon:/conf
+      - /opt/conf/hass/config:/conf
       # Timezone configuration (Linux only)
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
+    # logging:
+    #   driver: none
 
   grocy:
     image: linuxserver/grocy:latest
