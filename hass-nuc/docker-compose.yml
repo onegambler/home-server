@@ -3,11 +3,11 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.97.2
+    image: homeassistant/intel-nuc-homeassistant:0.98.1
     # build:
     #   context: .
     #   args:
-    #     BUILD_VERSION: 0.96.5
+    #     BUILD_VERSION: 0.98.1
     depends_on:
       - mosquitto
       - mariadb
