@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.99.3
+    image: homeassistant/intel-nuc-homeassistant:0.100.2
     # build:
     #   context: .
     #   args:
