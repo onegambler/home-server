@@ -1,5 +1,36 @@
-version: '3'
+version: '3.4'
 services:
+  vpn:
+    container_name: vpn
+    image: bubuntux/nordvpn:latest
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    devices:
+      - /dev/net/tun
+    environment:
+      - USER=${NORDVPN_USER}
+      - PASS=${NORDVPN_PASS}
+      - COUNTRY=Iceland
+      - PROTOCOL=UDP
+      - CATEGORY=P2P
+      - NETWORK=192.168.1.0/24
+      - OPENVPN_OPTS=--pull-filter ignore "ping-restart" --ping-exit 180
+      - TZ=Europe/London
+    ports:
+      - "8112:8112"
+      - "4000:4000"
+      - "4080:4080"
+      - "20562:20562"
+      - "20566:20566/udp"
+      - "16965:16965/udp"
+      - "3617:3617/udp"
+      - "6881:6881"
+      - "6882:6882"
+      - "58846:58846"
+    logging:
+      driver: none
+
   samba:
     container_name: samba
     image: dperson/samba:latest
@@ -29,21 +60,13 @@ services:
     container_name: "mldonkey"
     image: onegambler/mldonkey:latest
     restart: unless-stopped
+    network_mode: service:vpn # run on the vpn network
     environment:
       - TZ=Europe/London # timezone
       - MLDONKEY_CLIENT_NAME=raspberrypi
       - MLDONKEY_ADMIN_PASSWORD=${MLDONKEY_ADMIN_PASSWORD}
       - PUID=1000
       - PGID=1000
-    ports:
-      - "4000:4000"
-      - "4080:4080"
-      - "20562:20562"
-      - "20566:20566/udp"
-      - "16965:16965/udp"
-      - "3617:3617/udp"
-      - "6881:6881"
-      - "6882:6882"
     volumes:
       - /mnt/extHD/raspberrypi/configs/mldonkey:/var/lib/mldonkey
       - /mnt/extHD/download/complete:/download/complete
@@ -55,13 +78,11 @@ services:
     container_name: "deluge"
     image: onegambler/deluge:latest
     restart: unless-stopped
+    network_mode: service:vpn # run on the vpn network
     environment:
       - TZ=Europe/London # timezone
       - PUID=1000
       - PGID=1000
-    ports:
-      - 58846:58846
-      - 8112:8112
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/extHD/raspberrypi/configs/deluge/config:/volumes/config

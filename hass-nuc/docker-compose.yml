@@ -3,11 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.100.2
-    # build:
-    #   context: .
-    #   args:
-    #     BUILD_VERSION: 0.98.1
+    image: homeassistant/intel-nuc-homeassistant:0.102.3
     depends_on:
       - mosquitto
       - mariadb
@@ -198,8 +194,8 @@ services:
       # Timezone configuration (Linux only)
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   grocy:
     image: linuxserver/grocy:latest
