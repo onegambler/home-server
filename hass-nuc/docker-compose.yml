@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.110.1
+    image: homeassistant/intel-nuc-homeassistant:0.110.2
     depends_on:
       - mosquitto
       - mariadb
@@ -38,7 +38,7 @@ services:
       - /opt/conf:/mount
     command: 
       -u "roberto;${ROBERTO_PASSWORD}"
-      -s "HASS;/mount;yes;no;no;roberto"
+      -s "HASS;/mount;yes;no;no;roberto;roberto"
     logging:
       driver: none
 
