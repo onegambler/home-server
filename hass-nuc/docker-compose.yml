@@ -211,3 +211,14 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+
+  monitor:
+    image: mashupmill/presence-monitor:0.2.197
+    container_name: monitorNUC
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    volumes:
+      - /opt/conf/monitor/config:/config
