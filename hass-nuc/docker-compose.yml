@@ -212,13 +212,13 @@ services:
     logging:
       driver: none
 
-  monitor:
-    image: mashupmill/presence-monitor:latest
-    container_name: monitorNUC
-    depends_on:
-      - mosquitto
-    restart: unless-stopped
-    network_mode: host
-    privileged: true
-    volumes:
-      - /opt/conf/monitor/config:/config
+  # monitor:
+  #   image: mashupmill/presence-monitor:latest
+  #   container_name: monitorNUC
+  #   depends_on:
+  #     - mosquitto
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   privileged: true
+  #   volumes:
+  #     - /opt/conf/monitor/config:/config
