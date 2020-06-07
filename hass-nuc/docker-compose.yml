@@ -213,7 +213,7 @@ services:
       driver: none
 
   monitor:
-    image: mashupmill/presence-monitor:0.2.197
+    image: mashupmill/presence-monitor:latest
     container_name: monitorNUC
     depends_on:
       - mosquitto
