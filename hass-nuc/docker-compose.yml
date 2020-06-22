@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.110.4
+    image: homeassistant/intel-nuc-homeassistant:0.111.4
     depends_on:
       - mosquitto
       - mariadb
