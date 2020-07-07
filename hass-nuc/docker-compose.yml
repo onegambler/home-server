@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.111.4
+    image: homeassistant/intel-nuc-homeassistant:0.112.3
     depends_on:
       - mosquitto
       - mariadb
@@ -211,14 +211,3 @@ services:
     restart: unless-stopped
     logging:
       driver: none
-
-  # monitor:
-  #   image: mashupmill/presence-monitor:latest
-  #   container_name: monitorNUC
-  #   depends_on:
-  #     - mosquitto
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   privileged: true
-  #   volumes:
-  #     - /opt/conf/monitor/config:/config
