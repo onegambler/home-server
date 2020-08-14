@@ -233,3 +233,19 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+
+  bitwarden:
+    image: bitwardenrs/server:latest
+    restart: always
+    volumes:
+      - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
+    environment:
+      WEBSOCKET_ENABLED: 'true' # Required to use websockets
+      SIGNUPS_ALLOWED: 'true'   # set to false to disable signups
+  
+  # bitwarden_backup:
+  #   image: bruceforce/bw_backup:latest
+  #   volumes_from:
+  #     - bitwarden:rw
+  #   environment:
+  #     DELETE_AFTER: 10

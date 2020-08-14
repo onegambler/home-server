@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.112.3
+    image: homeassistant/intel-nuc-homeassistant:0.113.2
     depends_on:
       - mosquitto
       - mariadb
@@ -42,25 +42,27 @@ services:
     logging:
       driver: none
 
-  nginx:
-    image: linuxserver/letsencrypt:latest
-    container_name: nginx
-    restart: unless-stopped
-    environment:
-      - EMAIL=${LETSENCRYPT_EMAIL}
-      - URL=${HASS_URL}
-      - SUBDOMAINS=${HASS_SUBDOMAIN}
-      - ONLY_SUBDOMAINS=true
-      - VALIDATION=http
-      - TZ=Europe/London
-    volumes:
-      - /opt/conf/nginx/config:/config
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "80:80"
-      - "443:443"
+  swag:
+    image: linuxserver/letsencrypt
+    container_name: swag
     cap_add:
       - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - DUCKDNSTOKEN=${DUCKDNS_TOKEN}
+      - EMAIL=${LETSENCRYPT_EMAIL}
+      - URL=${BASE_URL}
+      - ONLY_SUBDOMAINS=false
+      - SUBDOMAINS=wildcard
+      - VALIDATION=duckdns
+      - TZ=Europe/Madrid
+    volumes:
+      - /opt/conf/swag/config:/config
+    ports:
+      - 443:443
+      - 80:80 #optional
+    restart: unless-stopped
     logging:
       driver: none
 
@@ -71,7 +73,7 @@ services:
     environment:
       - SUBDOMAINS=${HASS_SUBDOMAIN}
       - TOKEN=${DUCKDNS_TOKEN}
-      - TZ=Europe/London
+      - TZ=Europe/Madrid
     logging:
       driver: none
 
@@ -203,7 +205,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=Europe/Madrid
     volumes:
       - /opt/conf/grocy:/config
     ports:
