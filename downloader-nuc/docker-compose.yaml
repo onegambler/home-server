@@ -237,6 +237,7 @@ services:
   bitwarden:
     image: bitwardenrs/server:latest
     restart: always
+    container_name: bitwarden
     volumes:
       - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
     environment:
