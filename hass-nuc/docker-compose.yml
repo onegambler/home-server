@@ -213,3 +213,13 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+
+  selenium:
+    image: selenium/standalone-chrome
+    container_name: selenium
+    ports:
+      - "4444:4444"
+    shm_size: '2gb'
+    restart: unless-stopped
+    logging:
+      driver: none
