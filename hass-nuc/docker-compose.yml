@@ -3,10 +3,11 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.115.1
+    image: homeassistant/intel-nuc-homeassistant:0.115.6
     depends_on:
       - mosquitto
       - mariadb
+      - grocy
     ports:
       - "8123:8123"
     volumes:
