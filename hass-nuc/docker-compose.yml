@@ -1,13 +1,16 @@
-version: '3'
+version: '2.4'
 services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.115.6
+    image: homeassistant/intel-nuc-homeassistant:0.116.4
     depends_on:
-      - mosquitto
-      - mariadb
-      - grocy
+      mosquitto:
+        condition: service_started
+      mariadb:
+        condition: service_started
+      grocy:
+        condition: service_healthy
     ports:
       - "8123:8123"
     volumes:
@@ -183,8 +186,10 @@ services:
     container_name: appdaemon
     image: acockburn/appdaemon:4.0.5
     depends_on:
-      # Start home-assistant first
-      - home-assistant
+      home-assistant:
+        condition: service_started
+      grocy:
+        condition: service_healthy
     environment:
       - HA_URL="http://${HOST}:8123"
       - TOKEN=${HASS_APPDAEMON_TOKEN}
@@ -197,6 +202,11 @@ services:
       # Timezone configuration (Linux only)
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}", "https://${HOST}:5050/api/appdaemon/healthcheck"]
+      interval: 45s
+      timeout: 3s
+      retries: 5
     logging:
       driver: none
 
@@ -214,6 +224,12 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
 
   selenium:
     image: selenium/standalone-chrome
