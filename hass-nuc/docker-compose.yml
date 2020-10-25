@@ -202,11 +202,11 @@ services:
       # Timezone configuration (Linux only)
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}", "https://${HOST}:5050/api/appdaemon/healthcheck"]
-      interval: 45s
-      timeout: 3s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "curl", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}", "https://${HOST}:5050/api/appdaemon/healthcheck"]
+    #   interval: 45s
+    #   timeout: 3s
+    #   retries: 5
     logging:
       driver: none
 
@@ -228,7 +228,7 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
       start_period: 2m
 
   selenium:
