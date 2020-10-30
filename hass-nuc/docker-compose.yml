@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.116.4
+    image: homeassistant/intel-nuc-homeassistant:0.117.1
     depends_on:
       mosquitto:
         condition: service_started
@@ -233,10 +233,12 @@ services:
 
   selenium:
     image: selenium/standalone-chrome
-    container_name: selenium
-    ports:
-      - "4444:4444"
-    shm_size: '512mb'
-    restart: unless-stopped
-    logging:
-      driver: none
+  # selenium:
+  #   image: selenium/standalone-chrome
+  #   container_name: selenium
+  #   ports:
+  #     - "4444:4444"
+  #   shm_size: '512mb'
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: none
