@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.117.1
+    image: homeassistant/intel-nuc-homeassistant:0.117.6
     depends_on:
       mosquitto:
         condition: service_started
@@ -231,8 +231,6 @@ services:
       retries: 5
       start_period: 2m
 
-  selenium:
-    image: selenium/standalone-chrome
   # selenium:
   #   image: selenium/standalone-chrome
   #   container_name: selenium
