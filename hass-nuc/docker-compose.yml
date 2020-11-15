@@ -19,11 +19,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     network_mode: host
     privileged: true
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8123"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8123"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 10
     logging:
       driver: none
 
@@ -192,7 +192,7 @@ services:
     image: acockburn/appdaemon:4.0.5
     depends_on:
       home-assistant:
-        condition: service_healthy
+        condition: service_started
       grocy:
         condition: service_healthy
     environment:
