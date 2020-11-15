@@ -19,6 +19,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     network_mode: host
     privileged: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8123"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
     logging:
       driver: none
 
@@ -187,7 +192,7 @@ services:
     image: acockburn/appdaemon:4.0.5
     depends_on:
       home-assistant:
-        condition: service_started
+        condition: service_healthy
       grocy:
         condition: service_healthy
     environment:
@@ -222,14 +227,13 @@ services:
     ports:
       - 9283:80
     restart: unless-stopped
-    logging:
-      driver: none
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 2m
+      retries: 10
+    logging:
+      driver: none
 
   # selenium:
   #   image: selenium/standalone-chrome
