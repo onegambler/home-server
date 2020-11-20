@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.117.6
+    image: homeassistant/intel-nuc-homeassistant:0.118.1
     depends_on:
       mosquitto:
         condition: service_started
@@ -165,18 +165,18 @@ services:
     logging:
       driver: none
   
-  deepstack:
-    container_name: deepstack
-    image: deepquestai/deepstack:latest
-    restart: unless-stopped
-    volumes:
-      - /opt/conf/deepstack:/datastore
-    environment: 
-      - VISION-DETECTION=True
-    ports:
-      - "5000:5000"
-    logging:
-      driver: none
+  # deepstack:
+  #   container_name: deepstack
+  #   image: deepquestai/deepstack:latest
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /opt/conf/deepstack:/datastore
+  #   environment: 
+  #     - VISION-DETECTION=True
+  #   ports:
+  #     - "5000:5000"
+  #   logging:
+  #     driver: none
 
   linux_dash:
     image: imightbebob/linux-dash:x86
