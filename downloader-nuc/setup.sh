@@ -15,8 +15,10 @@ sudo add-apt-repository \
 sudo apt update
 sudo apt-get install docker-ce -y
 
+sudo groupadd docker
 sudo usermod -aG docker ${USER}
 su - ${USER}
+sudo systemctl restart docker
 
 sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
@@ -31,19 +33,21 @@ touch ~/.bash_aliases
 grep -q -F "$ALIASES" ~/.bash_aliases || echo "$ALIASES" > ~/.bash_aliases
 
 
-# Setting up /etc/network/interfaces
+# Setting up /etc/netplan/50-cloud-init.yaml
 DHCP_CONFIG="
-# The primary network interface
-auto eno1
-iface eno1 inet static
-    address 192.168.1.64
-    netmask 255.255.255.0
-    network 192.168.1.0
-    broadcast 192.168.1.255
-    gateway 192.168.1.1
-    dns-nameservers 1.1.1.1 1.0.0.1"
+network:
+  ethernets:
+    eno1:
+        dhcp4: false
+        addresses: [192.168.1.64/24]
+        gateway4: 192.168.1.1
+        nameservers:
+            addresses: [1.1.1.1,1.0.0.1,192.168.1.1]
+  version: 2"
 
-grep -q -x "iface eno1 inet static" /etc/network/interfaces  || echo "$DHCP_CONFIG" | sudo tee --append /etc/network/interfaces > /dev/null
+sudo touch /etc/netplan/50-cloud-init.yaml
+echo "$DHCP_CONFIG" > /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
 
 
 # Setting up /etc/hosts
