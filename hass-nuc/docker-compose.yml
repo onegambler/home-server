@@ -165,18 +165,18 @@ services:
     logging:
       driver: none
   
-  # deepstack:
-  #   container_name: deepstack
-  #   image: deepquestai/deepstack:latest
-  #   restart: unless-stopped
-  #   volumes:
-  #     - /opt/conf/deepstack:/datastore
-  #   environment: 
-  #     - VISION-DETECTION=True
-  #   ports:
-  #     - "5000:5000"
-  #   logging:
-  #     driver: none
+  deepstack:
+    container_name: deepstack
+    image: deepquestai/deepstack:latest
+    restart: unless-stopped
+    volumes:
+      - /opt/conf/deepstack:/datastore
+    environment: 
+      - VISION-DETECTION=True
+    ports:
+      - "5000:5000"
+    logging:
+      driver: none
 
   linux_dash:
     image: imightbebob/linux-dash:x86
@@ -216,7 +216,7 @@ services:
       driver: none
 
   grocy:
-    image: linuxserver/grocy:latest
+    image: linuxserver/grocy:version-v2.7.1
     container_name: grocy
     environment:
       - PUID=1000
