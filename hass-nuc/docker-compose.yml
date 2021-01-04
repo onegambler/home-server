@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:0.118.1
+    image: homeassistant/intel-nuc-homeassistant:2020.12.2
     depends_on:
       mosquitto:
         condition: service_started
