@@ -237,19 +237,30 @@ services:
     logging:
       driver: none
 
-  bitwarden:
-    image: bitwardenrs/server:latest
-    restart: always
-    container_name: bitwarden
-    volumes:
-      - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
     environment:
-      WEBSOCKET_ENABLED: 'true' # Required to use websockets
-      SIGNUPS_ALLOWED: 'false'   # set to false to disable signups
+      - LOG_LEVEL=info
     ports:
-      - 8090:80
+      - 8191:8191
+    restart: unless-stopped
     logging:
       driver: none
+
+  # bitwarden:
+  #   image: bitwardenrs/server:latest
+  #   restart: always
+  #   container_name: bitwarden
+  #   volumes:
+  #     - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
+  #   environment:
+  #     WEBSOCKET_ENABLED: 'true' # Required to use websockets
+  #     SIGNUPS_ALLOWED: 'false'   # set to false to disable signups
+  #   ports:
+  #     - 8090:80
+  #   logging:
+  #     driver: none
 
   # bitwarden_backup:
   #   image: bruceforce/bw_backup:latest
