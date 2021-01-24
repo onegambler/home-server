@@ -10,7 +10,7 @@ services:
       mariadb:
         condition: service_started
       grocy:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "8123:8123"
     volumes:
