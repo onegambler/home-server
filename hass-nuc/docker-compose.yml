@@ -227,11 +227,6 @@ services:
     ports:
       - 9283:80
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
     logging:
       driver: none
 
