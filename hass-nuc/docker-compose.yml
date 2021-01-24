@@ -194,7 +194,7 @@ services:
       home-assistant:
         condition: service_started
       grocy:
-        condition: service_healthy
+        condition: service_started
     environment:
       - HA_URL="http://${HOST}:8123"
       - TOKEN=${HASS_APPDAEMON_TOKEN}
