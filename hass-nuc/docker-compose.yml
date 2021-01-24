@@ -216,7 +216,7 @@ services:
       driver: none
 
   grocy:
-    image: linuxserver/grocy:version-v2.7.1
+    image: linuxserver/grocy:latest
     container_name: grocy
     environment:
       - PUID=1000
