@@ -248,6 +248,15 @@ services:
     logging:
       driver: none
 
+  jdownloader-2:
+    image: jlesage/jdownloader-2
+    build: .
+    ports:
+      - "5800:5800"
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/jdownloader2:/config:rw
+      - /mnt/extHD/download/jdownloader:/output:rw
+
   # bitwarden:
   #   image: bitwardenrs/server:latest
   #   restart: always
