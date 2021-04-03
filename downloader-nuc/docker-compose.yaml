@@ -247,6 +247,7 @@ services:
     restart: unless-stopped
     logging:
       driver: none
+
   pyload:
     image: writl/pyload:latest
     container_name: pyload

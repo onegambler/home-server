@@ -160,6 +160,8 @@ services:
       - mosquitto
     volumes:
       - /opt/conf/zigbee2mqtt:/app/data
+    ports:
+      - "8088:8088"
     devices:
       - /dev/ttyACM0:/dev/ttyACM0
     logging:
