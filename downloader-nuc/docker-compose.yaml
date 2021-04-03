@@ -247,15 +247,19 @@ services:
     restart: unless-stopped
     logging:
       driver: none
-
-  jdownloader-2:
-    image: jlesage/jdownloader-2
-    build: .
+  pyload:
+    image: writl/pyload:latest
+    container_name: pyload
     ports:
-      - "5800:5800"
+      - 8000:8000
+    environment:
+      - UID=1000
+      - GID=1000
     volumes:
-      - /mnt/extHD/raspberrypi/configs/jdownloader2:/config:rw
-      - /mnt/extHD/download/jdownloader:/output:rw
+      - /mnt/extHD/raspberrypi/configs/pyload:/opt/pyload/pyload-config
+      - /mnt/extHD/download/incomplete/pyload:/opt/pyload/Downloads
+    logging:
+      driver: none
 
   # bitwarden:
   #   image: bitwardenrs/server:latest
