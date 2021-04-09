@@ -125,16 +125,26 @@ services:
     logging:
       driver: none
 
-  ble-scanner:
-    container_name: ble-scanner
-    image: onegambler/mqtt-ble-scanner:latest
-    volumes:
-      - /opt/conf/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
-    restart: unless-stopped
+  # ble-scanner:
+  #   container_name: ble-scanner
+  #   image: onegambler/mqtt-ble-scanner:latest
+  #   volumes:
+  #     - /opt/conf/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   privileged: true
+  #   logging:
+  #     driver: none
+
+  room-assistant:
+    image: mkerix/room-assistant:latest
+    container_name: room-assistant
     network_mode: host
-    privileged: true
-    logging:
-      driver: none
+    volumes:
+      - /var/run/dbus:/var/run/dbus
+      - /opt/conf/room-assistant/config:/room-assistant/config
+    # logging:
+    #   driver: none
 
   mariadb:
     container_name: mariadb
