@@ -143,8 +143,8 @@ services:
     volumes:
       - /var/run/dbus:/var/run/dbus
       - /opt/conf/room-assistant/config:/room-assistant/config
-    # logging:
-    #   driver: none
+    logging:
+      driver: none
 
   mariadb:
     container_name: mariadb
@@ -219,11 +219,6 @@ services:
       # Timezone configuration (Linux only)
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
-    # healthcheck:
-    #   test: ["CMD", "curl", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}", "https://${HOST}:5050/api/appdaemon/healthcheck"]
-    #   interval: 45s
-    #   timeout: 3s
-    #   retries: 5
     logging:
       driver: none
 
