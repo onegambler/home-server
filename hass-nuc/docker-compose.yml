@@ -138,6 +138,7 @@ services:
 
   room-assistant:
     image: mkerix/room-assistant:latest
+    restart: unless-stopped
     container_name: room-assistant
     network_mode: host
     volumes:
