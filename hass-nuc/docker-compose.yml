@@ -68,6 +68,7 @@ services:
       - TZ=Europe/Madrid
     volumes:
       - /opt/conf/swag/config:/config
+      - /opt/conf/hass/config:/hass
     ports:
       - 443:443
       - 80:80 #optional

@@ -249,16 +249,19 @@ services:
       driver: none
 
   pyload:
-    image: writl/pyload:latest
+    image: ghcr.io/linuxserver/pyload
     container_name: pyload
     ports:
       - 8000:8000
+      - 7227:7227
     environment:
       - UID=1000
       - GID=1000
+      - TZ=Europe/Madrid
     volumes:
-      - /mnt/extHD/raspberrypi/configs/pyload:/opt/pyload/pyload-config
-      - /mnt/extHD/download/incomplete/pyload:/opt/pyload/Downloads
+      - /mnt/extHD/raspberrypi/configs/pyload:/config
+      - /mnt/extHD/download/incomplete/pyload:/downloads
+    restart: unless-stopped
     logging:
       driver: none
 
