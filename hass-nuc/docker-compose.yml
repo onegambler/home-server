@@ -42,7 +42,7 @@ services:
       grocy:
         condition: service_started
     ports:
-      - "8123:8124"
+      - "8124:8123"
     environment: 
       - PUID=1001
       - PGID=1001
