@@ -28,7 +28,7 @@ services:
       driver: none
 
 
-  home-assistant:
+  home-assistant-new:
     container_name: home-assistant_new
     restart: unless-stopped
     image: homeassistant/intel-nuc-homeassistant:2021.4.6
