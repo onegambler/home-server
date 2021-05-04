@@ -27,6 +27,36 @@ services:
     logging:
       driver: none
 
+
+  home-assistant:
+    container_name: home-assistant_new
+    restart: unless-stopped
+    image: homeassistant/intel-nuc-homeassistant:2021.4.6
+    depends_on:
+      mosquitto:
+        condition: service_started
+      mariadb:
+        condition: service_started
+      grocy:
+        condition: service_started
+    ports:
+      - "8123:8124"
+    volumes:
+      - /opt/conf/hass-new/config:/config
+      - /opt/conf/hass-new/media:/media
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+    privileged: true
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8123"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 10
+    logging:
+      driver: none
+
+
+
   samba:
     container_name: samba
     image: dperson/samba:latest
