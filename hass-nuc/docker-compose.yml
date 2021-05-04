@@ -28,7 +28,7 @@ services:
       driver: none
 
 
-  home-assistant-new:
+  home-assistant-new :
     container_name: home-assistant_new
     restart: unless-stopped
     image: homeassistant/intel-nuc-homeassistant:2021.4.6
@@ -40,7 +40,7 @@ services:
       grocy:
         condition: service_started
     ports:
-      - "8123:8124"
+      - "8124:8123"
     volumes:
       - /opt/conf/hass-new/config:/config
       - /opt/conf/hass-new/media:/media
