@@ -13,9 +13,9 @@ services:
         condition: service_started
     ports:
       - "8123:8123"
-    # environment: 
-    #   - PUID=1001
-    #   - PGID=1001
+    environment: 
+      - PUID=1001
+      - PGID=1001
     volumes:
       - /opt/conf/hass/config:/config
       - /opt/conf/hass/media:/media
