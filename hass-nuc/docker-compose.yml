@@ -79,16 +79,16 @@ services:
     logging:
       driver: none
 
-  duckdns:
-    image: linuxserver/duckdns:latest
-    container_name: duckdns
-    restart: unless-stopped
-    environment:
-      - SUBDOMAINS=${HASS_SUBDOMAIN}
-      - TOKEN=${DUCKDNS_TOKEN}
-      - TZ=Europe/Madrid
-    logging:
-      driver: none
+  # duckdns:
+  #   image: linuxserver/duckdns:latest
+  #   container_name: duckdns
+  #   restart: unless-stopped
+  #   environment:
+  #     - SUBDOMAINS=${HASS_SUBDOMAIN}
+  #     - TOKEN=${DUCKDNS_TOKEN}
+  #     - TZ=Europe/Madrid
+  #   logging:
+  #     driver: none
 
   mosquitto:
     image: eclipse-mosquitto:1.6.12
