@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:2021.5.5
+    image: homeassistant/intel-nuc-homeassistant:2021.6.1
     depends_on:
       mosquitto:
         condition: service_started
@@ -170,7 +170,7 @@ services:
 
   zigbee2mqtt:
     container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:latest
+    image: koenkk/zigbee2mqtt:1.18.3
     restart: unless-stopped
     depends_on:
       - mosquitto
