@@ -159,7 +159,7 @@ services:
 
   zigbee2mqtt:
     container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:1.20.0
+    image: koenkk/zigbee2mqtt:1.18.3
     restart: unless-stopped
     depends_on:
       - mosquitto
