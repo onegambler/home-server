@@ -3,7 +3,7 @@ services:
   home-assistant:
     container_name: home-assistant
     restart: unless-stopped
-    image: homeassistant/intel-nuc-homeassistant:2021.7.3
+    image: homeassistant/intel-nuc-homeassistant:2021.7.4
     depends_on:
       mosquitto:
         condition: service_started
@@ -79,17 +79,6 @@ services:
     restart: unless-stopped
     logging:
       driver: none
-
-  # duckdns:
-  #   image: linuxserver/duckdns:latest
-  #   container_name: duckdns
-  #   restart: unless-stopped
-  #   environment:
-  #     - SUBDOMAINS=${HASS_SUBDOMAIN}
-  #     - TOKEN=${DUCKDNS_TOKEN}
-  #     - TZ=Europe/Madrid
-  #   logging:
-  #     driver: none
 
   mosquitto:
     image: eclipse-mosquitto:1.6.12
@@ -170,7 +159,7 @@ services:
 
   zigbee2mqtt:
     container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:1.18.3
+    image: koenkk/zigbee2mqtt:1.20.0
     restart: unless-stopped
     depends_on:
       - mosquitto
