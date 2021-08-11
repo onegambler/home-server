@@ -152,7 +152,7 @@ services:
       driver: none
 
   portainer:
-    image: portainer/portainer:linux-amd64
+    image: portainer/portainer:latest
     container_name: portainer
     restart: unless-stopped
     ports:
