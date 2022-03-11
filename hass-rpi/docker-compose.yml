@@ -1,152 +1,315 @@
-version: '3'
+version: '3.4'
 services:
-  homeassistant:
-    container_name: home-assistant
-    restart: unless-stopped
-    image: homeassistant/raspberrypi3-homeassistant:0.80.3
-    depends_on:
-      - mosquitto
-    devices:
-      - /dev/ttyACM0:/dev/ttyACM0
-    ports:
-      - "8123:8123"
-    volumes:
-      - /home/pi/docker/hass/config:/config
-      - /etc/localtime:/etc/localtime:ro
-      - /home/pi/docker/hass/media:/media
-    network_mode: host
-    privileged: true
-    logging:
-      driver: none
-
   samba:
     container_name: samba
-    image: dperson/samba:armhf
+    image: dperson/samba:latest
     restart: unless-stopped
-    environment: 
+    environment:
       - WORKGROUP=workgroup
+      - USERID=1000
+      - GROUPID=1000
     ports:
-      - "137:137/tcp"
-      - "137:137/udp"
-      - "138:138/tcp"
-      - "138:138/udp"
-      - "139:139"
-      - "445:445"
-      - "445:445/udp"
+      - 137:137/tcp
+      - 137:137/udp
+      - 138:138/tcp
+      - 138:138/udp
+      - 139:139
+      - 445:445
+      - 445:445/udp
     volumes:
-      - /home/pi/docker:/mount
-    command: 
+      - /mnt/extHD/:/mount
+    command:
       -u "roberto;${ROBERTO_PASSWORD}"
-      -s "HASS;/mount;yes;no;no;roberto"
+      -u "jenny;${JENNY_PASSWORD}"
+      -s "NAS;/mount;yes;no;no;roberto,jenny"
+      -r # don't add recycle bin
     logging:
       driver: none
 
-  nginx:
-    image: lsioarmhf/letsencrypt:latest
-    container_name: nginx
+  mldonkey:
+    container_name: "mldonkey"
+    image: onegambler/mldonkey:latest
     restart: unless-stopped
     environment:
+      - TZ=Europe/London # timezone
+      - MLDONKEY_CLIENT_NAME=raspberrypi
+      - MLDONKEY_ADMIN_PASSWORD=${MLDONKEY_ADMIN_PASSWORD}
       - PUID=1000
       - PGID=1000
-      - EMAIL=${LETSENCRYPT_EMAIL}
-      - URL=${HASS_URL}
-      - SUBDOMAINS=${HASS_SUBDOMAIN}
-      - ONLY_SUBDOMAINS=true
-      - VALIDATION=http
-      - TZ=Europe/London
+    ports:
+      - "4000:4000"
+      - "4080:4080"
+      - "20562:20562"
+      - "20566:20566/udp"
+      - "16965:16965/udp"
+      - "3617:3617/udp"
+      - "6881:6881"
+      - "6882:6882"
     volumes:
-      - /home/pi/docker/nginx/config:/config
+      - /mnt/extHD/raspberrypi/configs/mldonkey:/var/lib/mldonkey
+      - /mnt/extHD/download/complete:/download/complete
+      - /mnt/extHD/download/incomplete/eDonkey:/download/incomplete
+    logging:
+      driver: none
+
+  deluge:
+    container_name: "deluge"
+    image: onegambler/deluge:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/London # timezone
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - 58846:58846
+      - 8112:8112
+    volumes:
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    cap_add:
-      - NET_ADMIN
+      - /mnt/extHD/raspberrypi/configs/deluge/config:/volumes/config
+      - /mnt/extHD/raspberrypi/configs/deluge/torrents:/volumes/data
+      - /mnt/extHD/download/complete:/volumes/complete
+      - /mnt/extHD/download/incomplete/torrent:/volumes/download
     logging:
       driver: none
 
-  duckdns:
-    image: lsioarmhf/duckdns:latest
-    container_name: duckdns
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett:amd64-latest
     restart: unless-stopped
+    environment:
+      - PUID=1000 # default user id, for downloaded files access rights
+      - PGID=1000 # default group id, for downloaded files access rights
+      - TZ=Europe/London # timezone
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:jackett
+      - TP_THEME=organizr
+    ports:
+      - 9117:9117
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/download/complete:/download
+      - /mnt/extHD/raspberrypi/configs/jackett:/config # config files
+    logging:
+      driver: none
+
+  sonarr:
+    image: linuxserver/sonarr:amd64-latest
+    container_name: sonarr
     environment:
       - PUID=1000
       - PGID=1000
-      - SUBDOMAINS=${HASS_SUBDOMAIN}
-      - TOKEN=${DUCKDNS_TOKEN}
       - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:sonarr
+      - TP_THEME=organizr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/sonarr:/config
+      - /mnt/extHD/Roberto/media/series:/tv
+      - /mnt/extHD/download/complete:/downloads
+    ports:
+      - 8989:8989
+    depends_on:
+      - jackett
+      - deluge
+    restart: unless-stopped
     logging:
       driver: none
 
-  mosquitto:
-    image: sbiermann/rpi-mosquitto
-    container_name: mosquitto
+  radarr:
+    image: linuxserver/radarr:nightly-alpine
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:radarr
+      - TP_THEME=organizr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/radarr:/config
+      - /mnt/extHD/Roberto/media/movies:/movies
+      - /mnt/extHD/download/complete:/downloads
+    ports:
+      - 7878:7878
+    depends_on:
+      - jackett
+      - deluge
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  bazaar:
+    image: linuxserver/bazarr:amd64-latest
+    container_name: bazaar
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:bazarr
+      - TP_THEME=organizr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/extHD/raspberrypi/configs/bazaar:/config
+      - /mnt/extHD/Roberto/media/movies:/movies
+      - /mnt/extHD/Roberto/media/series:/tv
+    ports:
+      - 6767:6767
+    depends_on:
+      - jackett
+      - deluge
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  organizr-v2:
+    container_name: organizr
+    hostname: organizr
+    image: organizr/organizr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - fpm=true #true or false | using true will provide better performance
+      - branch=v2-master #v2-master or #v2-develop
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/organizr-v2:/config
+    ports:
+      - 80:80
+    restart: unless-stopped
+    depends_on:
+      - sonarr
+      - radarr
+      - deluge
+    logging:
+      driver: none
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
     restart: unless-stopped
     volumes:
-      - /home/pi/docker/mqtt/config:/mqtt/config:ro
-      - /home/pi/docker/mqtt/log:/mqtt/log
-      - /home/pi/docker/mqtt/data/:/mqtt/data
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    expose:
-      - "1883"
-      - "9001"
-    logging:
-      driver: none
-
-  portainer:
-    container_name: portainer
-    image: portainer/portainer:arm
-    ports:
-      - 9000:9000
-    volumes:
-      - /home/pi/docker/portainer/data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: on-failure
-    logging:
-      driver: none
-
-  ble-scanner:
-    container_name: ble-scanner
-    image: onegambler/mqtt-ble-scanner:latest
-    volumes:
-      - /home/pi/docker/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
-    restart: on-failure
-    network_mode: host
-    privileged: true
-    logging:
-      driver: none
-
-  dropbox-syncer:
-    container_name: dropbox-syncer
-    image: onegambler/dropbox-syncer:latest
-    volumes:
-      - /home/pi/docker:/data:ro
-    restart: on-failure
     environment:
-      - DROPBOX_KEY=${DROPBOX_ACCESS_TOKEN}
-      - TO_EXCLUDE=home-assistant_v2.db*,home-assistant.log,hass/media,.git,deps,__pycache__,hass/config/tts,*.log*,*_google.mp3
-      - TZ=Europe/London
-      - CRON_SCHEDULE=0 2 * * *
-    logging:
-      driver: none
-  
-  watchtower:
-    container_name: watchtower
-    image: v2tec/watchtower:armhf-latest
-    restart: on-failure
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --schedule "0 0 4 * * *"
+      - TZ=Europe/Madrid
+      - WATCHTOWER_LIFECYCLE_HOOKS=1 # Enable pre/post-update scripts
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=telegram://${TELEGRAM_BOT_TOKEN}@telegram/?channels=${ROBERTO_TELEGRAM_CHAT_ID}
+    command: --cleanup --schedule "0 0 5 * * *"
     logging:
       driver: none
 
-  zigbee2mqtt:
-    container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:arm32v6
-    tty: true
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - TZ=Europe/London
     volumes:
-      - /home/pi/docker/zigbee2mqtt/data:/app/data
-    devices:
-      - /dev/ttyACM0
+      - /mnt/extHD/raspberrypi/configs/plex/config:/config
+      - /mnt/extHD:/data
+      - /mnt/extHD/raspberrypi/configs/plex/transcode:/transcode
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - JELLYFIN_PublishedServerUrl=192.168.0.64 #optional
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/jellyfin/config:/config
+      - /mnt/extHD/Roberto/media/series:/data/tvshows
+      - /mnt/extHD/Roberto/media/movies:/data/movies
+      - /mnt/extHD/Roberto/media/anime:/data/anime
+    ports:
+      - 8096:8096
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  pyload:
+    image: ghcr.io/linuxserver/pyload
+    container_name: pyload
+    ports:
+      - 8000:8000
+      - 7227:7227
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/pyload:/config
+      - /mnt/extHD/download/incomplete/pyload:/downloads
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  prowlarr:
+    image: ghcr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:prowlarr
+      - TP_THEME=organizr
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/prowlarr/config:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  duplicati:
+    image: ghcr.io/linuxserver/duplicati
+    container_name: duplicati
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/duplicati/config:/config
+      - /mnt/extHD/raspberrypi/configs/duplicati/backups:/backups
+      - /mnt/extHD/raspberrypi/configs:/source
+    ports:
+      - 8200:8200
+    restart: unless-stopped
+#    logging:
+#      driver: none
+
+  # bitwarden:
+  #   image: bitwardenrs/server:latest
+  #   restart: always
+  #   container_name: bitwarden
+  #   volumes:
+  #     - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
+  #   environment:
+  #     WEBSOCKET_ENABLED: 'true' # Required to use websockets
+  #     SIGNUPS_ALLOWED: 'false'   # set to false to disable signups
+  #   ports:
+  #     - 8090:80
+  #   logging:
+  #     driver: none
+
+  # bitwarden_backup:
+  #   image: bruceforce/bw_backup:latest
+  #   volumes_from:
+  #     - bitwarden:rw
+  #   environment:
+  #     DELETE_AFTER: 10

@@ -1,13 +1,306 @@
 version: '2.4'
 services:
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
+  home-assistant:
+    container_name: home-assistant
+    restart: unless-stopped
+    image: homeassistant/intel-nuc-homeassistant:2022.3.3
+    depends_on:
+      mosquitto:
+        condition: service_started
+      mariadb:
+        condition: service_started
+      grocy:
+        condition: service_started
     ports:
-      - 9000:9000
+      - "8123:8123"
+    environment: 
+      - PUID=1001
+      - PGID=1001
     volumes:
-      - /opt/conf/portainer/data:/data:rw
+      - /opt/conf/hass/config:/config
+      - /opt/conf/hass/media:/media
       - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+    privileged: true
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8123"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 10
+    logging:
+      driver: none
+
+  samba:
+    container_name: samba
+    image: dperson/samba:latest
+    restart: unless-stopped
+    environment: 
+      - WORKGROUP=workgroup
+      - PUID=1001
+      - PGID=1001
+    ports:
+      - "137:137/tcp"
+      - "137:137/udp"
+      - "138:138/tcp"
+      - "138:138/udp"
+      - "139:139"
+      - "445:445"
+      - "445:445/udp"
+    volumes:
+      - /opt/conf:/mount
+    command: 
+      -u "roberto;${ROBERTO_PASSWORD}"
+      -s "HASS;/mount;yes;no;no;roberto;roberto"
+    logging:
+      driver: none
+
+  swag:
+    image: linuxserver/letsencrypt
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - DUCKDNSTOKEN=${DUCKDNS_TOKEN}
+      - EMAIL=${LETSENCRYPT_EMAIL}
+      - URL=${BASE_URL}
+      - ONLY_SUBDOMAINS=false
+      - SUBDOMAINS=wildcard
+      - VALIDATION=duckdns
+      - TZ=Europe/Madrid
+    volumes:
+      - /opt/conf/swag/config:/config
+      - /opt/conf/hass/config:/hass
+    ports:
+      - 443:443
+      - 80:80 #optional
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    volumes:
+      - /opt/conf/mqtt/config:/mosquitto/config
+      - /opt/conf/mqtt/data:/mosquitto/data
+      - /opt/conf/mqtt/log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    expose:
+      - "1883"
+      - "9001"
+    logging:
+      driver: none
+  
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Madrid
+      - WATCHTOWER_LIFECYCLE_HOOKS=1 # Enable pre/post-update scripts
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=telegram://${TELEGRAM_BOT_TOKEN}@telegram/?channels=${ROBERTO_TELEGRAM_CHAT_ID}
+    command: --cleanup --schedule "0 0 4 * * *"
+    logging:
+      driver: none
+
+  # ble-scanner:
+  #   container_name: ble-scanner
+  #   image: onegambler/mqtt-ble-scanner:latest
+  #   volumes:
+  #     - /opt/conf/mqtt-ble-scanner/config:/mqtt-ble-scanner/config
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   privileged: true
+  #   logging:
+  #     driver: none
+
+  room-assistant:
+    image: mkerix/room-assistant:beta
+    restart: unless-stopped
+    container_name: room-assistant
+    network_mode: host
+    volumes:
+      - /var/run/dbus:/var/run/dbus
+      - /opt/conf/room-assistant/config:/room-assistant/config
+    cap_add:
+      - NET_ADMIN
+#    logging:
+#      driver: none
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb:latest
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - /opt/conf/mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=${MARIADB_USER}
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+      - MYSQL_DATABASE=hass
+    logging:
+      driver: none
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt:latest
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    volumes:
+      - /opt/conf/zigbee2mqtt:/app/data
+    ports:
+      - "8088:8088"
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    logging:
+      driver: none
+  
+  deepstack:
+    container_name: deepstack
+    image: deepquestai/deepstack:latest
+    restart: unless-stopped
+    volumes:
+      - /opt/conf/deepstack:/datastore
+    environment: 
+      - VISION-DETECTION=True
+    ports:
+      - "5000:5000"
+    logging:
+      driver: none
+
+  appdaemon:
+    container_name: appdaemon
+    image: acockburn/appdaemon:latest
+    depends_on:
+      home-assistant:
+        condition: service_started
+      grocy:
+        condition: service_started
+    environment:
+      - HA_URL="http://${HOST}:8123"
+      - TOKEN=${HASS_APPDAEMON_TOKEN}
+      - DASH_URL="http://${HOST}:5050"
+    ports:
+      - 5050:5050
+    volumes:
+      # App daemon configuration
+      - /opt/conf/hass/config:/conf
+      # Timezone configuration (Linux only)
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  grocy:
+    image: linuxserver/grocy:3.1.3
+    container_name: grocy
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Madrid
+    volumes:
+      - /opt/conf/grocy:/config
+    ports:
+      - 9283:80
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  code-server:
+    image: ghcr.io/linuxserver/code-server:latest
+    container_name: code-server
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Madrid
+    volumes:
+      - /opt/conf/hass/config:/hass-config
+      - /opt/conf/code-server/config:/config
+    ports:
+      - 8443:8443
+    logging:
+      driver: none
+      
+  wireguard:
+    image: ghcr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Madrid
+      - SERVERURL= inuc.duckdns.org
+      - SERVERPORT=51820 #optional
+      - PEERS=2 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=192.168.1.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+    volumes:
+      - /opt/conf/wireguard/config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  duplicati:
+    image: ghcr.io/linuxserver/duplicati
+    container_name: duplicati
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Madrid
+    volumes:
+      - /opt/conf/duplicati/config:/config
+      - /opt/conf/duplicati/backups:/backups
+      - /opt/conf:/source
+    ports:
+      - 8200:8200
+    restart: unless-stopped
+    logging:
+      driver: none
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    volumes:
+      - /opt/conf/n8n/config:/home/node/.n8n
+    environment:
+      - GENERIC_TIMEZONE=Europe/Madrid
+      - TZ=Europe/Madrid
+    ports:
+      - 5678:5678
+    restart: unless-stopped
+    logging:
+      driver: none
+ 
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    volumes:
+      - /opt/conf/uptime-kuma/config:/app/data
+    environment:
+      - GENERIC_TIMEZONE=Europe/Madrid
+      - TZ=Europe/Madrid
+    ports:
+      - 3001:3001
     restart: unless-stopped
     logging:
       driver: none
