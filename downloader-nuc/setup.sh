@@ -86,3 +86,12 @@ sudo service nfs-server stop
 EXPORT_CONFIG="/mnt/extHD           192.168.1.0/24(rw,nohide,insecure,no_subtree_check,async,all_squash)"
 grep -q -F "$EXPORT_CONFIG" /etc/exports || echo "$EXPORT_CONFIG" | sudo tee --append /etc/exports > /dev/null
 sudo service nfs-server start
+
+#### Docker remote API #########
+# sudo cat /var/snap/docker/current/config/daemon.json
+#{
+#    "log-level":        "error",
+#    "storage-driver":   "overlay2",
+#    "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
+#}
+
