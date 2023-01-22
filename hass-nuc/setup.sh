@@ -3,23 +3,26 @@ sudo apt update
 sudo apt upgrade
 sudo apt dist-upgrade
 
-sudo apt-get install -y curl openssh-server git
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
 
 sudo sed -i 's/Port 22/Port 2222/g' /etc/ssh/sshd_config
      
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt update
-sudo apt-get install docker-ce -y
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 sudo usermod -aG docker ${USER}
 su - ${USER}
-
-sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
 
 # Setting up aliases
 ALIASES="dbash() { docker exec -it $(docker ps -aqf "name=$1") bash; }
