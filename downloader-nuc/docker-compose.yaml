@@ -1,9 +1,112 @@
-version: '3.4'
+version: "3.9"
+
+networks:
+  traefik:
+    name: traefik
+  internal:
+    internal: true
+
+x-common: &default
+  restart: unless-stopped
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
+
+  # =========================
+  # INFRA / CORE
+  # =========================
+  dockerproxy:
+    container_name: dockerproxy
+    image: lscr.io/linuxserver/socket-proxy:latest
+    <<: *default
+    environment:
+      - ALLOW_START=1
+      - ALLOW_STOP=1
+      - ALLOW_RESTARTS=1
+      - ALLOW_PAUSE=0
+      - ALLOW_UNPAUSE=0
+      - AUTH=0
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - CONTAINERS=1
+      - DISABLE_IPV6=0
+      - DISTRIBUTION=0
+      - EVENTS=1
+      - EXEC=0
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - NODES=0
+      - PING=1
+      - PLUGINS=0
+      - POST=1
+      - SECRETS=0
+      - SERVICES=0
+      - SESSION=0
+      - SWARM=0
+      - SYSTEM=0
+      - TASKS=0
+      - TZ=Etc/UTC
+      - VERSION=1
+      - VOLUMES=0
+      - LOG_LEVEL=info
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - internal
+    read_only: true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2375/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    tmpfs:
+      - /run
+
+  traefik:
+    container_name: traefik
+    image: traefik:v3.6
+    <<: *default
+    depends_on:
+      dockerproxy:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - traefik
+      - internal
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://dockerproxy:2375"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--ping=true"
+    read_only: true
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    tmpfs:
+      - /tmp
+
+  # =========================
+  # FILES / NAS
+  # =========================
   samba:
     container_name: samba
     image: dperson/samba:latest
-    restart: unless-stopped
+    <<: *default
     environment:
       - WORKGROUP=workgroup
       - USERID=1000
@@ -22,22 +125,22 @@ services:
       -u "roberto;${ROBERTO_PASSWORD}"
       -u "jenny;${JENNY_PASSWORD}"
       -s "NAS;/mount;yes;no;no;roberto,jenny"
-    logging:
-      driver: none
+      -r
 
+  # =========================
+  # DOWNLOAD / MEDIA CORE
+  # =========================
   mldonkey:
-    container_name: "mldonkey"
+    container_name: mldonkey
     image: onegambler/mldonkey:latest
-    restart: unless-stopped
+    <<: *default
     environment:
-      - TZ=Europe/London # timezone
+      - TZ=Europe/London
       - MLDONKEY_CLIENT_NAME=raspberrypi
       - MLDONKEY_ADMIN_PASSWORD=${MLDONKEY_ADMIN_PASSWORD}
       - PUID=1000
       - PGID=1000
     ports:
-      - "4000:4000"
-      - "4080:4080"
       - "20562:20562"
       - "20566:20566/udp"
       - "16965:16965/udp"
@@ -48,212 +151,182 @@ services:
       - /mnt/extHD/raspberrypi/configs/mldonkey:/var/lib/mldonkey
       - /mnt/extHD/download/complete:/download/complete
       - /mnt/extHD/download/incomplete/eDonkey:/download/incomplete
-    logging:
-      driver: none
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mldonkey.rule=Host(`mldonkey.media.lan`) || Host(`mldonkey.media.arpa`)"
+      - "traefik.http.services.mldonkey.loadbalancer.server.port=4080"
 
   deluge:
-    container_name: "deluge"
-    image: onegambler/deluge:latest
-    restart: unless-stopped
+    container_name: deluge
+    image: lscr.io/linuxserver/deluge:2.1.1
+    <<: *default
     environment:
-      - TZ=Europe/London # timezone
+      - TZ=Europe/London
       - PUID=1000
       - PGID=1000
+      - DELUGE_LOGLEVEL=error
     ports:
       - 58846:58846
       - 8112:8112
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /mnt/extHD/raspberrypi/configs/deluge/config:/volumes/config
-      - /mnt/extHD/raspberrypi/configs/deluge/torrents:/volumes/data
-      - /mnt/extHD/download/complete:/volumes/complete
-      - /mnt/extHD/download/incomplete/torrent:/volumes/download
-    logging:
-      driver: none
+      - /mnt/extHD/raspberrypi/configs/deluge/config:/config
+      - /mnt/extHD/download:/downloads
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.deluge.rule=Host(`deluge.media.lan`) || Host(`deluge.media.arpa`)"
+      - "traefik.http.services.deluge.loadbalancer.server.port=8112"
 
-  jackett:
-    container_name: jackett
-    image: linuxserver/jackett:amd64-latest
-    restart: unless-stopped
+  flaresolverr:
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    <<: *default
     environment:
-      - PUID=1000 # default user id, for downloaded files access rights
-      - PGID=1000 # default group id, for downloaded files access rights
-      - TZ=Europe/London # timezone
-    ports:
-      - 9117:9117
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /mnt/extHD/download/complete:/download
-      - /mnt/extHD/raspberrypi/configs/jackett:/config # config files
-    logging:
-      driver: none
+      - LOG_LEVEL=info
+    networks:
+      - traefik
 
-  sonarr:
-    image: linuxserver/sonarr:amd64-latest
-    container_name: sonarr
+  prowlarr:
+    container_name: prowlarr
+    image: ghcr.io/linuxserver/prowlarr:develop
+    <<: *default
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:prowlarr
+      - TP_THEME=organizr
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/prowlarr/config:/config
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.media.lan`) || Host(`prowlarr.media.arpa`)"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+
+  # =========================
+  # MEDIA MANAGEMENT (*arr)
+  # =========================
+  sonarr:
+    container_name: sonarr
+    image: linuxserver/sonarr:amd64-latest
+    <<: *default
+    depends_on:
+      - prowlarr
+      - deluge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:sonarr
+      - TP_THEME=organizr
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/extHD/raspberrypi/configs/sonarr:/config
       - /mnt/extHD/Roberto/media/series:/tv
+      - /mnt/extHD/Roberto/media/anime:/anime
       - /mnt/extHD/download/complete:/downloads
-    ports:
-      - 8989:8989
-    depends_on:
-      - jackett
-      - deluge
-    restart: unless-stopped
-    logging:
-      driver: none
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.media.lan`) || Host(`sonarr.media.arpa`)"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
   radarr:
-    image: linuxserver/radarr:amd64-latest
     container_name: radarr
+    image: linuxserver/radarr:amd64-latest
+    <<: *default
+    depends_on:
+      - prowlarr
+      - deluge
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:radarr
+      - TP_THEME=organizr
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/extHD/raspberrypi/configs/radarr:/config
       - /mnt/extHD/Roberto/media/movies:/movies
       - /mnt/extHD/download/complete:/downloads
-    ports:
-      - 7878:7878
-    depends_on:
-      - jackett
-      - deluge
-    restart: unless-stopped
-    logging:
-      driver: none
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.media.lan`) || Host(`radarr.media.arpa`)"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
 
-  bazaar:
+  bazarr:
+    container_name: bazarr
     image: linuxserver/bazarr:amd64-latest
-    container_name: bazaar
+    <<: *default
+    depends_on:
+      - prowlarr
+      - deluge
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:bazarr
+      - TP_THEME=organizr
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /mnt/extHD/raspberrypi/configs/bazaar:/config
+      - /mnt/extHD/raspberrypi/configs/bazarr:/config
       - /mnt/extHD/Roberto/media/movies:/movies
       - /mnt/extHD/Roberto/media/series:/tv
-    ports:
-      - 6767:6767
-    depends_on:
-      - jackett
-      - deluge
-    restart: unless-stopped
-    logging:
-      driver: none
+      - /mnt/extHD/Roberto/media/anime:/anime
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.media.lan`) || Host(`bazarr.media.arpa`)"
+      - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    ports:
-      - 9000:9000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /mnt/extHD/raspberrypi/configs/portainer:/data
-    logging:
-      driver: none
-
-  organizr-v2:
-    container_name: organizr
-    hostname: organizr
-    image: organizr/organizr
+  # =========================
+  # MEDIA SERVERS / PLAYERS
+  # =========================
+  jellyfin:
+    container_name: jellyfin
+    image: lscr.io/linuxserver/jellyfin:10.11.5
+    <<: *default
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
-      - fpm=true #true or false | using true will provide better performance
-      - branch=v2-master #v2-master or #v2-develop
-    volumes:
-      - /mnt/extHD/raspberrypi/configs/organizr-v2:/config
+      - JELLYFIN_PublishedServerUrl=192.168.0.64
     ports:
-      - 80:80
-    restart: unless-stopped
-    depends_on:
-      - sonarr
-      - radarr
-      - deluge
-    logging:
-      driver: none
-
-  resilio-sync:
-    image: linuxserver/resilio-sync:latest
-    container_name: resilio-sync
-    restart: unless-stopped
-    ports:
-      - 8888:8888
-      - 55555:55555
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-      - UMASK_SET=022
+      - 8920:8920
+      - 7359:7359/udp
+      - 1900:1900/udp
     volumes:
-      - /mnt/extHD/raspberrypi/configs/resilio/config:/config
-      - /mnt/extHD/raspberrypi/configs/resilio/downloads:/downloads
-      - /mnt/extHD/Roberto:/sync
-    logging:
-      driver: none
+      - /mnt/extHD/raspberrypi/configs/jellyfin/config:/config
+      - /mnt/extHD/Roberto/media/series:/data/tvshows
+      - /mnt/extHD/Roberto/media/movies:/data/movies
+      - /mnt/extHD/Roberto/media/anime:/data/anime
+      - /mnt/extHD/Roberto/media/music:/data/music/roberto
+      - /mnt/extHD/Jenny/media/music:/data/music/jenny
+      - /mnt/extHD/raspberrypi/configs/jellyfin/plugins/dist:/usr/share/jellyfin/web:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.media.lan`) || Host(`jellyfin.media.arpa`)"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
 
-  watchtower:
-    image: v2tec/watchtower:latest
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --schedule "0 0 5 * * *"
-    logging:
-      driver: none
-
-  plex:
-    image: plexinc/pms-docker:latest
-    container_name: plex
-    network_mode: host
-    environment:
-      - TZ=Europe/London
-    volumes:
-      - /mnt/extHD/raspberrypi/configs/plex/config:/config
-      - /mnt/extHD:/data
-      - /mnt/extHD/raspberrypi/configs/plex/transcode:/transcode
-    restart: unless-stopped
-    logging:
-      driver: none
-
-  linux_dash:
-    image: imightbebob/linux-dash:x86
-    container_name: linux_dash
-    ports:
-      - 8080:8080
-    restart: unless-stopped
-    logging:
-      driver: none
-
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    environment:
-      - LOG_LEVEL=info
-    ports:
-      - 8191:8191
-    restart: unless-stopped
-    logging:
-      driver: none
-
+  # =========================
+  # TOOLS / UTILITIES
+  # =========================
   pyload:
-    image: ghcr.io/linuxserver/pyload
     container_name: pyload
-    ports:
-      - 8000:8000
-      - 7227:7227
+    image: linuxserver/pyload-ng:latest
+    <<: *default
     environment:
       - PUID=1000
       - PGID=1000
@@ -261,27 +334,85 @@ services:
     volumes:
       - /mnt/extHD/raspberrypi/configs/pyload:/config
       - /mnt/extHD/download/incomplete/pyload:/downloads
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pyload.rule=Host(`pyload.media.lan`) || Host(`pyload.media.arpa`)"
+      - "traefik.http.services.pyload.loadbalancer.server.port=8000"
+
+  duplicati:
+    container_name: duplicati
+    image: linuxserver/duplicati:latest
+    <<: *default
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - SETTINGS_ENCRYPTION_KEY=${DUPLICATI_SETTINGS_ENCRYPTION_KEY}
+    volumes:
+      - /mnt/extHD/raspberrypi/configs/duplicati/config:/config
+      - /mnt/extHD/raspberrypi/configs/duplicati/backups:/backups
+      - /mnt/extHD/raspberrypi/configs:/source
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.media.lan`) || Host(`duplicati.media.arpa`)"
+      - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
+
+  metube:
+    container_name: metube
+    image: ghcr.io/alexta69/metube
+    <<: *default
+    volumes:
+      - /mnt/extHD/download/complete:/downloads
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metube.rule=Host(`metube.media.lan`) || Host(`metube.media.arpa`)"
+      - "traefik.http.services.metube.loadbalancer.server.port=8081"
+
+  yubal:
+    container_name: yubal
+    image: ghcr.io/guillevc/yubal:0.6.3
+    <<: *default
+    user: 1000:1000
+    environment:
+      YUBAL_SCHEDULER_CRON: "0 0 * * *"
+      YUBAL_DOWNLOAD_UGC: false
+      YUBAL_TZ: Europe/Madrid
+    volumes:
+      - /mnt/extHD/download/music:/app/data
+      - /mnt/extHD/raspberrypi/configs/yubal:/app/config
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.yubal.rule=Host(`yubal.media.lan`) || Host(`yubal.media.arpa`)"
+      - "traefik.http.services.yubal.loadbalancer.server.port=8000"
+
+  # =========================
+  # AGENTS / CONTROL
+  # =========================
+  tugtainer-agent:
+    container_name: tugtainer-agent
+    image: ghcr.io/quenary/tugtainer-agent:1
     restart: unless-stopped
-    logging:
-      driver: none
-
-  # bitwarden:
-  #   image: bitwardenrs/server:latest
-  #   restart: always
-  #   container_name: bitwarden
-  #   volumes:
-  #     - ./mnt/extHD/raspberrypi/configs/bitwarden/data:/data
-  #   environment:
-  #     WEBSOCKET_ENABLED: 'true' # Required to use websockets
-  #     SIGNUPS_ALLOWED: 'false'   # set to false to disable signups
-  #   ports:
-  #     - 8090:80
-  #   logging:
-  #     driver: none
-
-  # bitwarden_backup:
-  #   image: bruceforce/bw_backup:latest
-  #   volumes_from:
-  #     - bitwarden:rw
-  #   environment:
-  #     DELETE_AFTER: 10
+    environment:
+      - AGENT_SECRET=${TUGTAINER_SECRET}
+      - DOCKER_HOST=tcp://dockerproxy:2375
+    ports:
+      - 9413:8001
+    networks:
+      - internal
+      - traefik
+    labels:
+      dev.quenary.tugtainer.protected: True
+    depends_on:
+      dockerproxy:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /run
