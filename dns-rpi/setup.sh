@@ -1,28 +1,67 @@
-curl -O https://static.adguard.com/adguardhome/release/AdGuardHome_linux_arm.tar.gz
-tar -xzvf AdGuardHome_linux_arm.tar.gz
-sudo ./AdGuardHome
-sudo ./AdGuardHome -s install
+############################################
+# ADGUARD HOME INSTALL (MODERN WAY)
+############################################
 
-# Setting up /etc/hosts
-HOSTS_CONFIG="127.0.1.1       raspberrypi
-192.168.1.70    hass.home
-192.168.1.254   router.home
-192.168.1.229   adguard.home
-192.168.1.226   lounge-camera.home
-192.168.1.69    tv-switch.smart
-192.168.1.65    lounge-light.home
-192.168.1.71    stairs-light.home
-192.168.1.128   android-tv.home
-192.168.1.64    downloader.home"
+log "Installing AdGuard Home"
 
-grep -q -x "127.0.1.1       raspberrypi" /etc/hosts  || echo "$HOSTS_CONFIG" | sudo tee --append /etc/hosts > /dev/null 
+ADGUARD_DIR="/opt/AdGuardHome"
 
-sudo apt-get install dnsmasq
+if [[ ! -f /usr/local/bin/AdGuardHome ]]; then
 
-DNSMASQ_CONFIG="listen-address=127.0.0.1
-port=5553"
+  mkdir -p /tmp/adguard
+  cd /tmp/adguard
 
-touch /etc/dnsmasq.conf
+  curl -fsSL https://static.adguard.com/adguardhome/release/AdGuardHome_linux_arm.tar.gz -o adguard.tar.gz
 
-grep -q -x "$DNSMASQ_CONFIG" /etc/dnsmasq.conf  || echo "$DNSMASQ_CONFIG" | sudo tee --append /etc/dnsmasq.conf > /dev/null 
-sudo service dnsmasq restart
+  tar -xzf adguard.tar.gz
+
+  cd AdGuardHome
+
+  ./AdGuardHome -s install
+
+else
+  echo "AdGuard Home already installed"
+fi
+
+############################################
+# DNS STRATEGY NOTE (IMPORTANT)
+############################################
+
+cat <<EOF
+
+AdGuard Home is now installed.
+
+RECOMMENDED SETUP (IMPORTANT):
+
+1. Do NOT use /etc/hosts for LAN resolution
+   - use AdGuard "DNS rewrites" instead
+
+2. Set router DNS to:
+   - 192.168.1.229 (AdGuard)
+
+3. Configure static hostnames inside AdGuard UI:
+   Settings → DNS → DNS rewrites
+
+EOF
+
+############################################
+# OPTIONAL LOCAL DNS FORWARDER (dnsmasq SAFE MODE)
+############################################
+
+log "Configuring optional dnsmasq (local only)"
+
+apt install -y dnsmasq
+
+DNSMASQ_CONF="/etc/dnsmasq.d/local.conf"
+
+cat >"${DNSMASQ_CONF}" <<EOF
+# Local DNS forwarder for custom resolution
+listen-address=127.0.0.1
+bind-interfaces
+port=5553
+
+# Forward everything to AdGuard
+server=192.168.1.229
+EOF
+
+systemctl restart dnsmasq
